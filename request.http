@@ -1,0 +1,55 @@
+### Get all companies
+GET http://localhost:3030/api/companies
+Accept: application/json
+
+###
+
+### Get company by ID
+GET http://localhost:3030/api/companies/1
+Accept: application/json
+
+###
+
+### Create a new company
+POST http://localhost:3030/api/companies
+Content-Type: application/json
+
+{
+  "name": "Test Company",
+  "description": "A company for testing",
+  "founded_year": 2020,
+  "industry": "Technology",
+  "website": "https://testcompany.com"
+}
+
+###
+
+### Update a company by ID
+PUT http://localhost:3030/api/companies/1
+Content-Type: application/json
+
+{
+  "name": "Updated Test Company",
+  "description": "Updated description",
+  "founded_year": 2021,
+  "industry": "Updated Technology",
+  "website": "https://updatedtestcompany.com"
+}
+
+###
+
+### Delete a company by ID
+DELETE http://localhost:3030/api/companies/1
+Accept: application/json
+
+###
+
+### Search companies by name
+GET http://localhost:3030/api/companies/search?name=Test
+Accept: application/json
+
+###
+
+### Get companies by industry
+GET http://localhost:3030/api/companies/industry/Technology
+Accept: application/json
