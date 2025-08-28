@@ -65,7 +65,7 @@ const uploadToPinata = async (file) => {
   }
 };
 
-function Productos({ provider, account }) {
+function Productos({ provider, account, agregarAlCarrito }) {
   const [contract, setContract] = useState(null);
   const [productoNombre, setProductoNombre] = useState('');
   const [productoPrecio, setProductoPrecio] = useState('');
@@ -75,6 +75,7 @@ function Productos({ provider, account }) {
   const [empresas, setEmpresas] = useState([]);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState({ type: '', message: '' });
+  const [cantidades, setCantidades] = useState({});
 
   // Cargar empresas para el dropdown
   const cargarEmpresas = useCallback(async () => {
@@ -278,6 +279,22 @@ function Productos({ provider, account }) {
     if (file) {
       setProductoImagen(file); // Almacenar el objeto File completo
     }
+  };
+
+  // Función para cambiar cantidad
+  const cambiarCantidad = (productoId, nuevaCantidad) => {
+    if (nuevaCantidad >= 1) {
+      setCantidades(prev => ({
+        ...prev,
+        [productoId]: nuevaCantidad
+      }));
+    }
+  };
+
+  // Función para agregar al carrito
+  const handleAgregarAlCarrito = (producto) => {
+    const cantidad = cantidades[producto.id] || 1;
+    agregarAlCarrito(producto, cantidad);
   };
 
   return (
@@ -496,6 +513,45 @@ function Productos({ provider, account }) {
                     <p><strong>Precio:</strong> {producto.precio} ETH</p>
                     <p><strong>Empresa:</strong> {producto.direccionEmpresa}</p>
                     <p><strong>ID:</strong> {producto.id}</p>
+                    
+                    {/* Selector de cantidad */}
+                    <div className="cantidad-selector">
+                      <label htmlFor={`cantidad-${producto.id}`}>Cantidad:</label>
+                      <div className="cantidad-controls">
+                        <button 
+                          type="button"
+                          className="btn-cantidad"
+                          onClick={() => cambiarCantidad(producto.id, (cantidades[producto.id] || 1) - 1)}
+                          disabled={(cantidades[producto.id] || 1) <= 1}
+                        >
+                          -
+                        </button>
+                        <input
+                          type="number"
+                          id={`cantidad-${producto.id}`}
+                          value={cantidades[producto.id] || 1}
+                          onChange={(e) => cambiarCantidad(producto.id, parseInt(e.target.value) || 1)}
+                          min="1"
+                          className="cantidad-input"
+                        />
+                        <button 
+                          type="button"
+                          className="btn-cantidad"
+                          onClick={() => cambiarCantidad(producto.id, (cantidades[producto.id] || 1) + 1)}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Botón de añadir al carrito */}
+                    <button 
+                      className="btn btn-agregar-carrito"
+                      onClick={() => handleAgregarAlCarrito(producto)}
+                    >
+                      🛒 Añadir a la Cesta
+                    </button>
+
                     {producto.cid && (
                       <p><strong>IPFS CID:</strong> <code style={{ fontSize: '12px', background: '#f8f9fa', padding: '2px 4px', borderRadius: '3px' }}>{producto.cid}</code></p>
                     )}

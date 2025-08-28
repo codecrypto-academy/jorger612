@@ -3,12 +3,44 @@ import { ethers } from 'ethers';
 import Empresas from './components/Empresas.jsx';
 import Clientes from './components/Clientes.jsx';
 import Productos from './components/Productos.jsx';
+import Carrito from './components/Carrito.jsx';
 
 function App() {
   const [provider, setProvider] = useState(null);
   const [account, setAccount] = useState('');
   const [activeTab, setActiveTab] = useState('empresas');
   const [status, setStatus] = useState({ type: '', message: '' });
+  const [carrito, setCarrito] = useState([]);
+  const [mostrarCarrito, setMostrarCarrito] = useState(false);
+
+  // Función para agregar al carrito
+  const agregarAlCarrito = (producto, cantidad) => {
+    const precioTotal = parseFloat(producto.precio) * cantidad;
+    const itemCarrito = {
+      id: producto.id,
+      nombre: producto.nombre,
+      direccionEmpresa: producto.direccionEmpresa,
+      imagen: producto.imagen,
+      cantidad: cantidad,
+      precioUnitario: producto.precio,
+      precioTotal: precioTotal
+    };
+    
+    setCarrito(prevCarrito => [...prevCarrito, itemCarrito]);
+    setStatus({
+      type: 'success',
+      message: `${cantidad} ${cantidad === 1 ? 'unidad' : 'unidades'} de ${producto.nombre} agregada al carrito`
+    });
+  };
+
+  // Función para eliminar del carrito
+  const eliminarDelCarrito = (index) => {
+    setCarrito(prevCarrito => prevCarrito.filter((_, i) => i !== index));
+    setStatus({
+      type: 'success',
+      message: 'Producto eliminado del carrito'
+    });
+  };
 
   // Conectar a MetaMask
   const connectWallet = async () => {
@@ -79,6 +111,14 @@ function App() {
         </div>
       ) : (
         <>
+          {/* Componente del carrito */}
+          <Carrito 
+            carrito={carrito}
+            eliminarDelCarrito={eliminarDelCarrito}
+            mostrarCarrito={mostrarCarrito}
+            setMostrarCarrito={setMostrarCarrito}
+          />
+
           <div className="wallet-info">
             <h3>Wallet Conectada</h3>
             <p><strong>Dirección:</strong> {account}</p>
@@ -115,7 +155,11 @@ function App() {
                             <Clientes provider={provider} account={account} />
                           )}
                           {activeTab === 'productos' && (
-                            <Productos provider={provider} account={account} />
+                            <Productos 
+                              provider={provider} 
+                              account={account} 
+                              agregarAlCarrito={agregarAlCarrito}
+                            />
                           )}
                         </div>
           </div>
