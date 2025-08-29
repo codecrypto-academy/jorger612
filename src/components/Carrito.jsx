@@ -1,15 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import ABI_FACTURA from '../ABI_FACTURA';
+import ABI_TOKEN from '../ABI_TOKEN';
 
 const CONTRACT_FACTURA_ADDRESS = '0xcbdA2B3fD6E2ce70ACfF3158F16503AC043dFA19';
+const CONTRACT_TOKEN_ADDRESS = '0xf3a330d667328f70EE26444f5519d457cdD36fdf';
 
 function Carrito({ carrito, eliminarDelCarrito, mostrarCarrito, setMostrarCarrito, provider, account }) {
   const [procesandoCompra, setProcesandoCompra] = useState(false);
   const [statusCompra, setStatusCompra] = useState({ type: '', message: '' });
+  const [contractToken, setContractToken] = useState(null);
+  const [tokenBalance, setTokenBalance] = useState('0');
+  const [tokenPrice, setTokenPrice] = useState('0');
+
+  // Inicializar contrato de tokens cuando se conecte la wallet
+  useEffect(() => {
+    if (provider && account) {
+      const initTokenContract = async () => {
+        try {
+          const signer = await provider.getSigner();
+          const tokenContract = new ethers.Contract(CONTRACT_TOKEN_ADDRESS, ABI_TOKEN, signer);
+          setContractToken(tokenContract);
+          await cargarDatosToken(tokenContract);
+        } catch (error) {
+          console.error('Error inicializando contrato de tokens:', error);
+        }
+      };
+      initTokenContract();
+    }
+  }, [provider, account]);
+
+  // Cargar datos del token
+  const cargarDatosToken = async (contractInstance = contractToken) => {
+    if (!contractInstance) return;
+    
+    try {
+      // Obtener balance de tokens del usuario
+      const balance = await contractInstance.balanceOf(account);
+      setTokenBalance(ethers.formatUnits(balance, 18));
+      
+      // Obtener precio del token
+      const price = await contractInstance.tokenPrice();
+      setTokenPrice(ethers.formatUnits(price, 18));
+      
+    } catch (error) {
+      console.error('Error cargando datos del token:', error);
+    }
+  };
 
   const calcularTotal = () => {
     return carrito.reduce((total, item) => total + item.precioTotal, 0);
+  };
+
+  // Calcular total en tokens EURO
+  const calcularTotalEnTokens = () => {
+    const totalETH = calcularTotal();
+    if (parseFloat(tokenPrice) > 0) {
+      return (totalETH / parseFloat(tokenPrice)).toFixed(6);
+    }
+    return '0';
+  };
+
+  // Verificar si tiene suficientes tokens
+  const tieneSuficientesTokens = () => {
+    const totalTokens = calcularTotalEnTokens();
+    return parseFloat(tokenBalance) >= parseFloat(totalTokens);
   };
 
   // Función para procesar la compra y enviar factura a la blockchain
@@ -26,6 +81,14 @@ function Carrito({ carrito, eliminarDelCarrito, mostrarCarrito, setMostrarCarrit
       setStatusCompra({
         type: 'error',
         message: 'El carrito está vacío'
+      });
+      return;
+    }
+
+    if (!tieneSuficientesTokens()) {
+      setStatusCompra({
+        type: 'error',
+        message: `No tienes suficientes tokens EURO. Necesitas ${calcularTotalEnTokens()} EURO, tienes ${tokenBalance} EURO`
       });
       return;
     }
@@ -75,6 +138,8 @@ function Carrito({ carrito, eliminarDelCarrito, mostrarCarrito, setMostrarCarrit
         carrito.forEach((_, index) => eliminarDelCarrito(0)); // Eliminar todos los items
         setMostrarCarrito(false);
         setStatusCompra({ type: '', message: '' });
+        // Recargar balance de tokens
+        cargarDatosToken();
       }, 3000);
 
     } catch (error) {
@@ -150,6 +215,19 @@ function Carrito({ carrito, eliminarDelCarrito, mostrarCarrito, setMostrarCarrit
                 <div className="carrito-footer">
                   <div className="carrito-total">
                     <strong>Total del Carrito: {calcularTotal().toFixed(6)} ETH</strong>
+                    <br />
+                    <strong>Equivale a: {calcularTotalEnTokens()} tokens EURO</strong>
+                  </div>
+                  
+                  {/* Información del balance de tokens */}
+                  <div className="token-balance-info">
+                    <p><strong>Tu balance de tokens EURO:</strong> {tokenBalance} EURO</p>
+                    <p><strong>Precio del token:</strong> {tokenPrice} ETH</p>
+                    {!tieneSuficientesTokens() && (
+                      <p className="insufficient-tokens">
+                        ⚠️ No tienes suficientes tokens EURO para esta compra
+                      </p>
+                    )}
                   </div>
                   
                   {/* Estado de la compra */}
@@ -162,7 +240,7 @@ function Carrito({ carrito, eliminarDelCarrito, mostrarCarrito, setMostrarCarrit
                   <button 
                     className="btn btn-comprar"
                     onClick={procesarCompra}
-                    disabled={procesandoCompra || !provider || !account}
+                    disabled={procesandoCompra || !provider || !account || !tieneSuficientesTokens()}
                   >
                     {procesandoCompra ? '⏳ Procesando...' : '💳 Proceder al Pago'}
                   </button>
@@ -170,6 +248,10 @@ function Carrito({ carrito, eliminarDelCarrito, mostrarCarrito, setMostrarCarrit
                   {!provider || !account ? (
                     <p className="wallet-required">
                       ⚠️ Conecta tu wallet para poder realizar la compra
+                    </p>
+                  ) : !tieneSuficientesTokens() ? (
+                    <p className="tokens-required">
+                      💡 Necesitas más tokens EURO. Ve a la pestaña "Tokens EURO" para comprar más.
                     </p>
                   ) : null}
                 </div>

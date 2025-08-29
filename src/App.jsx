@@ -5,6 +5,7 @@ import Clientes from './components/Clientes.jsx';
 import Productos from './components/Productos.jsx';
 import Carrito from './components/Carrito.jsx';
 import MisFacturas from './components/MisFacturas.jsx';
+import Tokens from './components/Tokens.jsx';
 
 function App() {
   const [provider, setProvider] = useState(null);
@@ -154,6 +155,12 @@ function App() {
               >
                 📄 Mis Facturas
               </button>
+              <button 
+                className={`menu-tab ${activeTab === 'tokens' ? 'active' : ''}`}
+                onClick={() => setActiveTab('tokens')}
+              >
+                🪙 Tokens EURO
+              </button>
             </div>
             
             <div className="tab-content">
@@ -172,6 +179,9 @@ function App() {
               )}
               {activeTab === 'misFacturas' && (
                 <MisFacturas provider={provider} account={account} />
+              )}
+              {activeTab === 'tokens' && (
+                <Tokens provider={provider} account={account} />
               )}
             </div>
           </div>
