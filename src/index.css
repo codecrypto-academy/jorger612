@@ -765,3 +765,110 @@ select:focus {
     justify-content: center;
   }
 }
+
+/* Estilos para el estado de la compra en el carrito */
+.status-compra {
+  padding: 12px 15px;
+  border-radius: 8px;
+  margin: 15px 0;
+  text-align: center;
+  font-weight: 500;
+}
+
+.status-compra.info {
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  color: white;
+}
+
+.status-compra.success {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+}
+
+.status-compra.error {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+}
+
+/* Botón de compra deshabilitado */
+.btn-comprar:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+.btn-comprar:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Mensaje de wallet requerida */
+.wallet-required {
+  background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+  color: #212529;
+  padding: 10px 15px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.9rem;
+  margin-top: 10px;
+  font-weight: 500;
+}
+
+/* Mejoras en el botón de compra */
+.btn-comprar {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  font-size: 1.1rem;
+  padding: 15px 30px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-comprar:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+}
+
+/* Estilos para Mis Facturas */
+.filtros-container {
+  display: flex;
+  gap: 20px;
+  align-items: end;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+}
+
+.filtros-container .form-group {
+  flex: 1;
+  min-width: 250px;
+  margin-bottom: 0;
+}
+
+.filtros-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+}
+
+.btn-limpiar {
+  background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
+  border: none;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-limpiar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+}
+
+.facturas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}

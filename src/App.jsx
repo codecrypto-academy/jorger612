@@ -4,6 +4,7 @@ import Empresas from './components/Empresas.jsx';
 import Clientes from './components/Clientes.jsx';
 import Productos from './components/Productos.jsx';
 import Carrito from './components/Carrito.jsx';
+import MisFacturas from './components/MisFacturas.jsx';
 
 function App() {
   const [provider, setProvider] = useState(null);
@@ -117,6 +118,8 @@ function App() {
             eliminarDelCarrito={eliminarDelCarrito}
             mostrarCarrito={mostrarCarrito}
             setMostrarCarrito={setMostrarCarrito}
+            provider={provider}
+            account={account}
           />
 
           <div className="wallet-info">
@@ -126,42 +129,51 @@ function App() {
           </div>
 
           <div className="menu-container">
-                                    <div className="menu-tabs">
-                          <button 
-                            className={`menu-tab ${activeTab === 'empresas' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('empresas')}
-                          >
-                            🏢 Empresas
-                          </button>
-                          <button 
-                            className={`menu-tab ${activeTab === 'clientes' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('clientes')}
-                          >
-                            👥 Clientes
-                          </button>
-                          <button 
-                            className={`menu-tab ${activeTab === 'productos' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('productos')}
-                          >
-                            📦 Productos
-                          </button>
-                        </div>
+            <div className="menu-tabs">
+              <button 
+                className={`menu-tab ${activeTab === 'empresas' ? 'active' : ''}`}
+                onClick={() => setActiveTab('empresas')}
+              >
+                🏢 Empresas
+              </button>
+              <button 
+                className={`menu-tab ${activeTab === 'clientes' ? 'active' : ''}`}
+                onClick={() => setActiveTab('clientes')}
+              >
+                👥 Clientes
+              </button>
+              <button 
+                className={`menu-tab ${activeTab === 'productos' ? 'active' : ''}`}
+                onClick={() => setActiveTab('productos')}
+              >
+                📦 Productos
+              </button>
+              <button 
+                className={`menu-tab ${activeTab === 'misFacturas' ? 'active' : ''}`}
+                onClick={() => setActiveTab('misFacturas')}
+              >
+                📄 Mis Facturas
+              </button>
+            </div>
             
-                                    <div className="tab-content">
-                          {activeTab === 'empresas' && (
-                            <Empresas provider={provider} account={account} />
-                          )}
-                          {activeTab === 'clientes' && (
-                            <Clientes provider={provider} account={account} />
-                          )}
-                          {activeTab === 'productos' && (
-                            <Productos 
-                              provider={provider} 
-                              account={account} 
-                              agregarAlCarrito={agregarAlCarrito}
-                            />
-                          )}
-                        </div>
+            <div className="tab-content">
+              {activeTab === 'empresas' && (
+                <Empresas provider={provider} account={account} />
+              )}
+              {activeTab === 'clientes' && (
+                <Clientes provider={provider} account={account} />
+              )}
+              {activeTab === 'productos' && (
+                <Productos 
+                  provider={provider} 
+                  account={account} 
+                  agregarAlCarrito={agregarAlCarrito}
+                />
+              )}
+              {activeTab === 'misFacturas' && (
+                <MisFacturas provider={provider} account={account} />
+              )}
+            </div>
           </div>
         </>
       )}
