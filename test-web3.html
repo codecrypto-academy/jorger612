@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Web3 - Conexión Directa</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@4.3.0/dist/web3.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #4f46e5;
+            text-align: center;
+        }
+        .status {
+            background: #dcfce7;
+            color: #166534;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .error {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .log {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        button {
+            background: #4f46e5;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #4338ca;
+        }
+        .info {
+            background: #f0f9ff;
+            color: #0369a1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 Test Web3 - Conexión Directa</h1>
+        
+        <div class="info">
+            <h3>📋 Configuración:</h3>
+            <ul>
+                <li><strong>URL:</strong> http://127.0.0.1:8545</li>
+                <li><strong>Contrato:</strong> 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512</li>
+                <li><strong>Web3 Version:</strong> 4.3.0</li>
+            </ul>
+        </div>
+        
+        <div style="text-align: center;">
+            <button onclick="testConnection()">Probar Conexión</button>
+            <button onclick="testContract()">Probar Contrato</button>
+            <button onclick="testCreateUser()">Crear Usuario</button>
+            <button onclick="testGetUsers()">Obtener Usuarios</button>
+        </div>
+        
+        <div class="log" id="log">
+            <div>Log de pruebas aparecerá aquí...</div>
+        </div>
+        
+        <div id="status"></div>
+    </div>
+
+    <script>
+        const CONTRACT_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
+        const RPC_URL = 'http://127.0.0.1:8545';
+        
+        const CONTRACT_ABI = [
+            {
+                "inputs": [
+                    {"internalType": "string", "name": "_name", "type": "string"},
+                    {"internalType": "uint256", "name": "_age", "type": "uint256"}
+                ],
+                "name": "createUser",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "getAllActiveUsers",
+                "outputs": [
+                    {
+                        "components": [
+                            {"internalType": "uint256", "name": "id", "type": "uint256"},
+                            {"internalType": "string", "name": "name", "type": "string"},
+                            {"internalType": "uint256", "name": "age", "type": "uint256"},
+                            {"internalType": "bool", "name": "isActive", "type": "bool"}
+                        ],
+                        "internalType": "struct userCrud.User[]",
+                        "name": "",
+                        "type": "tuple[]"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+
+        let web3, contract, account;
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function setStatus(message, isError = false) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="${isError ? 'error' : 'status'}">${message}</div>`;
+        }
+
+        async function testConnection() {
+            log('🔍 Iniciando test de conexión...');
+            try {
+                web3 = new Web3(RPC_URL);
+                log('✅ Web3 inicializado');
+                
+                const isListening = await web3.eth.isListening();
+                log(`✅ Conexión a Anvil: ${isListening}`);
+                
+                const accounts = await web3.eth.getAccounts();
+                log(`✅ Cuentas disponibles: ${accounts.length}`);
+                log(`✅ Primera cuenta: ${accounts[0]}`);
+                
+                account = accounts[0];
+                setStatus('✅ Conexión exitosa a Anvil');
+                
+            } catch (error) {
+                log(`❌ Error de conexión: ${error.message}`);
+                setStatus(`❌ Error de conexión: ${error.message}`, true);
+            }
+        }
+
+        async function testContract() {
+            if (!web3) {
+                log('❌ Web3 no inicializado. Ejecuta primero "Probar Conexión"');
+                return;
+            }
+            
+            log('🔍 Probando contrato...');
+            try {
+                const code = await web3.eth.getCode(CONTRACT_ADDRESS);
+                log(`✅ Código del contrato: ${code.substring(0, 20)}...`);
+                
+                contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+                log('✅ Contrato inicializado');
+                
+                setStatus('✅ Contrato conectado exitosamente');
+                
+            } catch (error) {
+                log(`❌ Error con contrato: ${error.message}`);
+                setStatus(`❌ Error con contrato: ${error.message}`, true);
+            }
+        }
+
+        async function testCreateUser() {
+            if (!contract || !account) {
+                log('❌ Contrato o cuenta no inicializados');
+                return;
+            }
+            
+            log('🔍 Creando usuario de prueba...');
+            try {
+                const tx = await contract.methods.createUser('Usuario Test', 25).send({
+                    from: account,
+                    gas: 300000
+                });
+                
+                log(`✅ Usuario creado. TX: ${tx.transactionHash}`);
+                setStatus('✅ Usuario creado exitosamente');
+                
+            } catch (error) {
+                log(`❌ Error creando usuario: ${error.message}`);
+                setStatus(`❌ Error creando usuario: ${error.message}`, true);
+            }
+        }
+
+        async function testGetUsers() {
+            if (!contract) {
+                log('❌ Contrato no inicializado');
+                return;
+            }
+            
+            log('🔍 Obteniendo usuarios...');
+            try {
+                const users = await contract.methods.getAllActiveUsers().call();
+                log(`✅ Usuarios obtenidos: ${users.length}`);
+                
+                users.forEach((user, index) => {
+                    log(`  Usuario ${index + 1}: ID=${user.id}, Nombre=${user.name}, Edad=${user.age}, Activo=${user.isActive}`);
+                });
+                
+                setStatus(`✅ ${users.length} usuarios obtenidos exitosamente`);
+                
+            } catch (error) {
+                log(`❌ Error obteniendo usuarios: ${error.message}`);
+                setStatus(`❌ Error obteniendo usuarios: ${error.message}`, true);
+            }
+        }
+
+        // Auto-ejecutar test de conexión
+        window.onload = function() {
+            log('🚀 Iniciando tests automáticos...');
+            testConnection();
+        };
+    </script>
+</body>
+</html>

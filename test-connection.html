@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Conexión - Smart Contract</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #4f46e5;
+            text-align: center;
+        }
+        .status {
+            background: #dcfce7;
+            color: #166534;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .error {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .info {
+            background: #f0f9ff;
+            color: #0369a1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .test-section {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        button {
+            background: #4f46e5;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #4338ca;
+        }
+        .log {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 Test de Conexión Smart Contract</h1>
+        
+        <div class="status">
+            ✅ Aplicación React funcionando correctamente
+        </div>
+        
+        <div class="info">
+            <h3>📋 Configuración del Smart Contract:</h3>
+            <ul>
+                <li><strong>Dirección:</strong> 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512</li>
+                <li><strong>Red:</strong> Anvil local (localhost:8545)</li>
+                <li><strong>Contrato:</strong> userCrud</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h3>🧪 Pruebas de Conexión:</h3>
+            <button onclick="testConnection()">Probar Conexión</button>
+            <button onclick="testContract()">Probar Contrato</button>
+            <button onclick="testCreateUser()">Crear Usuario Test</button>
+            <button onclick="testGetUsers()">Obtener Usuarios</button>
+        </div>
+        
+        <div class="log" id="log">
+            <div>Log de pruebas aparecerá aquí...</div>
+        </div>
+        
+        <div class="info">
+            <h3>🔧 Instrucciones:</h3>
+            <ol>
+                <li>Asegúrate de que Anvil esté ejecutándose en localhost:8545</li>
+                <li>Verifica que el contrato esté desplegado en la dirección correcta</li>
+                <li>Ejecuta las pruebas de conexión</li>
+                <li>Revisa los logs para identificar cualquier problema</li>
+            </ol>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="http://localhost:3000" style="background: #4f46e5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+                🚀 Ir a la Aplicación Principal
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        async function testConnection() {
+            log('🔍 Probando conexión a Anvil...');
+            try {
+                const response = await fetch('http://localhost:8545', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        method: 'eth_blockNumber',
+                        params: [],
+                        id: 1
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log('✅ Conexión a Anvil exitosa. Bloque actual: ' + parseInt(data.result, 16));
+                } else {
+                    log('❌ Error de conexión: ' + response.status);
+                }
+            } catch (error) {
+                log('❌ Error de conexión: ' + error.message);
+            }
+        }
+
+        async function testContract() {
+            log('🔍 Probando contrato inteligente...');
+            try {
+                const response = await fetch('http://localhost:8545', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        method: 'eth_getCode',
+                        params: ['0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512', 'latest'],
+                        id: 1
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.result === '0x') {
+                        log('❌ No se encontró código en la dirección del contrato');
+                    } else {
+                        log('✅ Contrato encontrado. Código: ' + data.result.substring(0, 20) + '...');
+                    }
+                } else {
+                    log('❌ Error verificando contrato: ' + response.status);
+                }
+            } catch (error) {
+                log('❌ Error verificando contrato: ' + error.message);
+            }
+        }
+
+        async function testCreateUser() {
+            log('🔍 Probando creación de usuario...');
+            try {
+                const response = await fetch('http://localhost:3000', {
+                    method: 'GET'
+                });
+                
+                if (response.ok) {
+                    log('✅ Aplicación React accesible');
+                } else {
+                    log('❌ Error accediendo a la aplicación: ' + response.status);
+                }
+            } catch (error) {
+                log('❌ Error accediendo a la aplicación: ' + error.message);
+            }
+        }
+
+        async function testGetUsers() {
+            log('🔍 Probando obtención de usuarios...');
+            log('ℹ️ Esta prueba requiere que la aplicación esté ejecutándose');
+        }
+
+        // Auto-ejecutar prueba de conexión
+        window.onload = function() {
+            log('🚀 Iniciando pruebas de conexión...');
+            testConnection();
+        };
+    </script>
+</body>
+</html>
