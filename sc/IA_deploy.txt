@@ -1,0 +1,92 @@
+INSTRUCCIONES DE DEPLOYMENT - SUPPLY CHAIN TRACKER
+==================================================
+
+1. Estructura de carpetas creada:
+   - Carpeta raíz: supply-chain-tracker
+   - Proyecto dentro: supply-chain-tracker/sc
+
+2. Archivo de deployment creado:
+   - Ubicación: supply-chain-tracker/sc/script/Deploy.s.sol
+   - Contenido: Parámetros de deployment para red local
+
+3. Renombramiento de contratos:
+   - ProductTracker.sol -> SupplyChain.sol
+   - ProductTracker.t.sol -> SupplyChain.t.sol
+   - Contrato renombrado de "ProductTracker" a "SupplyChain"
+   - Todos los tests actualizados con las nuevas referencias
+
+4. Archivos principales:
+   - Contrato principal: src/SupplyChain.sol
+   - Tests: test/SupplyChain.t.sol
+
+5. Parámetros de deployment:
+   --rpc-url http://localhost:8545 \
+   --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
+   --broadcast
+
+6. Para desplegar el contrato SupplyChain:
+
+   a) Primero, iniciar el nodo local de Anvil:
+      anvil
+
+   b) En otra terminal, ejecutar el script de deployment:
+      forge script script/Deploy.s.sol:DeployScript \
+        --rpc-url http://localhost:8545 \
+        --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
+        --broadcast
+
+Nota: La clave privada proporcionada es la cuenta por defecto #0 de Anvil (solo para desarrollo local).
+
+Deploy en ANVIL:
+
+rjorgea@LAPTOP-ATPQUCMA:~/supply-chain-tracker/sc$ forge script script/Deploy.s.sol:DeployScript --rpc-url http://localhost:8545 --broadcast --verify -vvvv
+[⠊] Compiling...
+[⠃] Compiling 1 files with Solc 0.8.30
+[⠊] Solc 0.8.30 finished in 811.75ms
+Compiler run successful!
+Warning: Detected artifacts built from source files that no longer exist. Run `forge clean` to make sure builds are in sync with project files.
+ - /home/rjorgea/supply-chain-tracker/sc/test/Counter.t.sol
+ - /home/rjorgea/supply-chain-tracker/sc/src/Counter.sol
+ - /home/rjorgea/supply-chain-tracker/sc/script/Counter.s.sol
+Traces:
+  [3494415] DeployScript::run()
+    ├─ [0] VM::startBroadcast()
+    │   └─ ← [Return]
+    ├─ [3453827] → new SupplyChain@0x5b73C5498c1E3b4dbA84de0F1833c4a029d90519
+    │   └─ ← [Return] 16808 bytes of code
+    ├─ [0] VM::stopBroadcast()
+    │   └─ ← [Return]
+    └─ ← [Return] SupplyChain: [0x5b73C5498c1E3b4dbA84de0F1833c4a029d90519]
+
+
+Script ran successfully.
+
+== Return ==
+0: contract SupplyChain 0x5b73C5498c1E3b4dbA84de0F1833c4a029d90519
+
+## Setting up 1 EVM.
+==========================
+Simulated On-chain Traces:
+
+  [3453827] → new SupplyChain@0x5b73C5498c1E3b4dbA84de0F1833c4a029d90519
+    └─ ← [Return] 16808 bytes of code
+
+
+==========================
+
+Chain 31337
+
+Estimated gas price: 2.000000001 gwei
+
+Estimated total gas used for script: 4887829
+
+Estimated amount required: 0.009775658004887829 ETH
+
+==========================
+
+Transactions saved to: /home/rjorgea/supply-chain-tracker/sc/broadcast/Deploy.s.sol/31337/run-latest.json
+
+Sensitive values saved to: /home/rjorgea/supply-chain-tracker/sc/cache/Deploy.s.sol/31337/run-latest.json
+
+Error: You seem to be using Foundry's default sender. Be sure to set your own --sender.
+rjorgea@LAPTOP-ATPQUCMA:~/supply-chain-tracker/sc$

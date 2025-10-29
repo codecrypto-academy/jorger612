@@ -1,0 +1,70 @@
+
+> creame un carpeta en la raiz llamada cli-foundry y luego ejecuta este comando git clone foundry-mcp-server
+cd cli-foundy
+
+● Voy a crear la carpeta cli-foundry en la raíz y luego clonar el repositorio foundry-mcp-server.
+
+● Bash(mkdir -p /home/rjorgea/cli-foundry)
+  ⎿  (No content)
+
+● Bash(cd /home/rjorgea/cli-foundry && git clone https://github.com/foundry-rs/foundry-mcp-server)
+  ⎿  Error: Cloning into 'foundry-mcp-server'...
+     fatal: could not read Username for 'https://github.com': No such device or address
+
+● Parece que hay un problema con la autenticación de Git. Permíteme intentar con la URL de Git en lugar de HTTPS:
+
+● Bash(cd /home/rjorgea/cli-foundry && git clone git@github.com:foundry-rs/foundry-mcp-server.git)
+  ⎿  Error: Cloning into 'foundry-mcp-server'...
+     ssh_askpass: exec(/usr/bin/ssh-askpass): No such file or directory
+     Host key verification failed.
+     fatal: Could not read from remote repository.
+
+     Please make sure you have the correct access rights
+     and the repository exists.
+
+● Parece que necesitamos configurar Git para este entorno. ¿Podrías proporcionarme la URL completa del repositorio
+  que deseas clonar? También podría necesitar que configures las credenciales de Git primero.
+
+  Alternativamente, si me proporcionas la URL completa del repositorio (por ejemplo,
+  https://github.com/usuario/foundry-mcp-server), puedo intentar clonarlo de esa manera.
+
+> https://github.com/PraneshASP/foundry-mcp-server
+
+● Bash(cd /home/rjorgea/cli-foundry && git clone https://github.com/PraneshASP/foundry-mcp-server)
+  ⎿  Cloning into 'foundry-mcp-server'...
+
+● ¡Perfecto! El repositorio se ha clonado exitosamente. Ahora voy a cambiar al directorio:
+
+● Bash(ls -la)
+  ⎿  total 12
+     drwxr-xr-x  3 rjorgea rjorgea 4096 Oct 12 10:36 .
+     drwxr-x--- 19 rjorgea rjorgea 4096 Oct 12 10:35 ..
+     drwxr-xr-x  5 rjorgea rjorgea 4096 Oct 12 10:36 foundry-mcp-server
+
+● Listo! He completado las siguientes acciones:
+
+  1. ✓ Creada la carpeta cli-foundry en /home/rjorgea/
+  2. ✓ Clonado el repositorio foundry-mcp-server desde https://github.com/PraneshASP/foundry-mcp-server
+
+  El repositorio ahora está disponible en /home/rjorgea/cli-foundry/foundry-mcp-server
+
+> cd /home/rjorgea/cli-foundry/foundry-mcp-server
+
+● Bash(cd /home/rjorgea/cli-foundry/foundry-mcp-server && pwd && ls -la)
+  ⎿  /home/rjorgea/cli-foundry/foundry-mcp-server
+     total 108
+     drwxr-xr-x 5 rjorgea rjorgea  4096 Oct 12 10:36 .
+     … +12 lines (ctrl+o to expand)
+
+● Perfecto! Ahora estoy en el directorio /home/rjorgea/cli-foundry/foundry-mcp-server.
+
+  Puedo ver que es un proyecto TypeScript/Node.js con:
+  - package.json y package-lock.json para dependencias
+  - bun.lockb (también soporta Bun)
+  - Código fuente en el directorio src/
+  - tsconfig.json para configuración de TypeScript
+
+  ¿Qué te gustaría hacer a continuación con este proyecto?
+
+rjorgea@LAPTOP-ATPQUCMA:~$ cd /home/rjorgea/cli-foundry/foundry-mcp-server
+rjorgea@LAPTOP-ATPQUCMA:~/cli-foundry/foundry-mcp-server$ npm install

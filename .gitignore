@@ -1,0 +1,37 @@
+# ------------------------------------------------------------------
+# Reglas comunes para el proyecto RAIZ (si aplicara)
+# ------------------------------------------------------------------
+# Por ejemplo, ignorar la carpeta de dependencias de Foundry (si la hubiese)
+# sc/node_modules/ 
+
+# ------------------------------------------------------------------
+# Reglas especificas para la subcarpeta Next.js (web/)
+# ------------------------------------------------------------------
+
+# Ignorar la carpeta de dependencias de Next.js
+web/node_modules/
+
+# Ignorar el directorio de construccion de Next.js
+web/.next/
+
+# Ignorar las variables de entorno locales
+web/.env
+web/.env.local
+web/.env.development.local
+web/.env.production.local
+
+# Ignorar archivos de logs y cache de Yarn/NPM/PNPM
+web/npm-debug.log*
+web/yarn-debug.log*
+web/yarn-error.log*
+web/.pnpm-debug.log*
+
+# Ignorar la carpeta de output de Next.js (si usas export)
+web/out/
+
+# Ignorar archivos de TypeScript autogenerados
+web/*.tsbuildinfo
+web/next-env.d.ts
+
+# Ignorar cache de Vercel
+web/.vercel/

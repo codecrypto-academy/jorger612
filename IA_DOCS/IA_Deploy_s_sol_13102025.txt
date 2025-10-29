@@ -1,0 +1,34 @@
+RESUMEN DE SESIÓN - 13/10/2025
+================================
+
+ACCIONES REALIZADAS:
+
+1. COPIA DE ARCHIVOS AL WORKSPACE MCP FOUNDRY
+   - Se copiaron archivos desde /home/rjorgea/supply-chain-tracker/sc/ a ~/.mcp-foundry-workspace/
+
+   Archivos copiados:
+   ✓ src/SupplyChain.sol (3.9K)
+   ✓ test/SupplyChain.t.sol (4.7K)
+   ✓ script/Deploy.s.sol (133B)
+
+2. TERMINACIÓN DE PROCESOS ANVIL
+   - Se ejecutó: pkill -9 anvil
+   - No había procesos anvil activos
+
+3. CREACIÓN DE CARPETA WEB
+   - Se creó el directorio: /home/rjorgea/supply-chain-tracker/web
+
+4. MODIFICACIÓN DE Deploy.s.sol
+   - Archivo: /home/rjorgea/supply-chain-tracker/sc/script/Deploy.s.sol
+
+   CAMBIO REALIZADO:
+   - Private key anterior: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+   - Private key nueva:     0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba
+
+   CONTENIDO FINAL:
+   --rpc-url http://localhost:8545 \
+     --private-key 0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba \
+     --broadcast
+
+================================
+FIN DE SESIÓN

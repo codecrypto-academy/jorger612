@@ -1,0 +1,12 @@
+¡Excelente! Encontré el token ID 1. Ahora déjame decodificar los datos según la estructura que devuelve getToken:
+Detalles del Token ID 1:
+
+ID: 1
+Owner (Propietario): 0x70997970C51812dc3A010C7d01b50e0d17dc79C8
+Product (Producto): "Aceite"
+Quantity (Cantidad): 1000 (0x3e8 en hexadecimal)
+Details (Detalles): "Aceite Vegetal"
+Status (Estado): 1 (probablemente "Active" o "En circulación")
+Timestamp: 1761109486 (0x68f295ee) - que corresponde aproximadamente a octubre de 2025
+
+Este token representa 1000 unidades de Aceite Vegetal y está actualmente en posesión de la dirección 0x7099...c79C8.

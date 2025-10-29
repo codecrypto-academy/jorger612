@@ -1,0 +1,11 @@
+Bitacora de Estimación de Tiempos de las solicitudes a la IA:
+
+1) Generación del proyecto con base a las instrucciones ::: 3 minutos
+2) Explicación del código generado por cursor con Gemini ::: 1 minuto
+3) Generar documentación conexión metamax ::: 2 minutos
+4) Pantalla selección de Rol ::: 7 minutos 
+5) Interfaz de manejo de usuarios ::: 10 minutos
+6) Pantalla Transferencias ::: 4 minutos
+7) Implementar Profile ::: 2 minutos
+
+
