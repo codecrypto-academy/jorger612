@@ -11,9 +11,6 @@
 # Ignorar la carpeta de dependencias de Next.js
 web/node_modules/
 
-# Ignorar respaldos
-sc/respaldo 
-
 # Ignorar el directorio de construccion de Next.js
 web/.next/
 
@@ -38,28 +35,3 @@ web/next-env.d.ts
 
 # Ignorar cache de Vercel
 web/.vercel/
-
-# ... Tus reglas de ignorado existentes ...
-
-# web/node_modules/
-# web/.next/
-# web/.env*
-# ...
-
-# ------------------------------------------------------------------
-# REGLAS DE INCLUSIÓN EXPLICITA (Para asegurar que suba el código fuente)
-# ------------------------------------------------------------------
-
-# Asegurar que suban todos los archivos de configuración
-# Estos archivos son la base para que el proyecto funcione en otro ambiente.
-!web/package.json
-!web/package-lock.json # o !web/yarn.lock si usas Yarn
-!web/tsconfig.json
-!web/next.config.js
-
-# Asegurar que suba el código fuente y carpetas esenciales
-# El doble asterisco (**) asegura que incluya todos los archivos en subdirectorios.
-!web/public/**
-!web/src/**
-!web/components/**
-!web/app/**
