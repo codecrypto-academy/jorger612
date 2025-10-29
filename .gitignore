@@ -17,11 +17,6 @@ sc/respaldo
 # Ignorar el directorio de construccion de Next.js
 web/.next/
 
-# Ignorar las variables de entorno locales
-web/.env
-web/.env.local
-web/.env.development.local
-web/.env.production.local
 
 # Ignorar archivos de logs y cache de Yarn/NPM/PNPM
 web/npm-debug.log*
@@ -63,3 +58,8 @@ web/.vercel/
 !web/src/**
 !web/components/**
 !web/app/**
+
+!web/.env
+!web/.env.local
+!web/.env.development.local
+!web/.env.production.local
