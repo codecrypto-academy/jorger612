@@ -11,6 +11,9 @@
 # Ignorar la carpeta de dependencias de Next.js
 web/node_modules/
 
+# Ignorar respaldos
+sc/respaldo 
+
 # Ignorar el directorio de construccion de Next.js
 web/.next/
 
