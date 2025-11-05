@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asteroides - Blockchain Game</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Header con botón MetaMask -->
+    <header class="header">
+        <h1>Asteroides - Blockchain Game</h1>
+        <div class="header-buttons">
+            <button id="connectWalletBtn" class="metamask-btn">
+                <span id="walletStatus">Conectar con MetaMask</span>
+            </button>
+            <button id="distributeBtn" class="distribute-btn" style="display: none;" disabled>
+                Distribuir
+            </button>
+            <button id="resetBtn" class="reset-btn" style="display: none;" disabled>
+                Reiniciar
+            </button>
+            <button id="pagarApuestaBtn" class="action-btn" style="display: none;" disabled>
+                Pagar Apuesta
+            </button>
+        </div>
+    </header>
+
+    <!-- Contenedor principal con tres columnas -->
+    <div class="main-container">
+        <!-- Columna izquierda: Juego -->
+        <div class="game-section">
+            <div class="game-wrapper">
+                <canvas id="gameCanvas" width="600" height="400"></canvas>
+                <div class="instructions">
+                    <p><strong>Controles:</strong></p>
+                    <p>Flechas ←→↑↓ para mover la nave</p>
+                    <p>Espacio para disparar</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna central: Banco -->
+        <div class="bank-section">
+            <div class="bank-card">
+                <h2>🏦 Banco Central</h2>
+                <div class="bank-info">
+                    <div class="bank-stat">
+                        <span class="label">Tokens Totales:</span>
+                        <span id="totalTokens" class="value">0</span>
+                    </div>
+                    <div class="bank-stat">
+                        <span class="label">Tokens Vendidos:</span>
+                        <span id="soldTokens" class="value">0</span>
+                    </div>
+                    <div class="bank-stat">
+                        <span class="label">Tokens Comprados:</span>
+                        <span id="boughtTokens" class="value">0</span>
+                    </div>
+                </div>
+                
+                <div class="accounts-panel">
+                    <h3>Cuentas del Sistema</h3>
+                    <div id="accountsList" class="accounts-list">
+                        <!-- Se generará dinámicamente -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Columna derecha: Apuestas -->
+        <div class="betting-section">
+            <h2>💰 Sistema de Apuestas</h2>
+            <div class="betting-info">
+                <p>Jugador Activo: <span id="activePlayerName">Ninguno</span></p>
+                <p>Puntaje Objetivo: <span id="targetScore">-</span></p>
+                <p>Bolsa Apostada: <span id="stakedPot">0</span> tokens</p>
+            </div>
+            
+            <div id="bettingCards" class="betting-cards">
+                <!-- Se generará dinámicamente -->
+            </div>
+
+            <div class="betting-results" id="bettingResults" style="display: none;">
+                <h3>Resultados de Apuestas</h3>
+                <div id="resultsContent"></div>
+                <button id="distributeWinningsBtn" class="action-btn" disabled>Distribuir Ganancias</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Distribución de Tokens -->
+    <div id="distributeModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Distribuir Tokens</h2>
+            <p>Distribuir tokens desde la cuenta Admin a todas las cuentas de jugadores.</p>
+            <div class="modal-form">
+                <label for="distributeAmount">
+                    Cantidad a Distribuir (a cada jugador):
+                    <input type="number" id="distributeAmount" min="1" step="1" placeholder="Ej: 100">
+                </label>
+                <div id="distributeStatus"></div>
+                <div class="modal-buttons">
+                    <button id="processDistributeBtn" class="action-btn">Procesar</button>
+                    <button id="cancelDistributeBtn" class="action-btn secondary">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Comprar Vidas -->
+    <div id="buyLivesModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Comprar Vidas para <span id="modalPlayerName">Jugador</span></h2>
+            <p>Cada vida cuesta 1 token. Elige cuántas vidas quieres comprar (máximo 6).</p>
+            <div class="modal-form">
+                <label for="modalLivesInput">
+                    Cantidad de vidas a comprar:
+                    <input type="number" id="modalLivesInput" min="1" max="6" value="1">
+                </label>
+                <div class="price-info">
+                    <span>Precio total: <span id="modalLivesPrice">1</span> tokens</span>
+                </div>
+                <div id="modalBuyLivesStatus"></div>
+                <div class="modal-buttons">
+                    <button id="confirmBuyLivesBtn" class="action-btn">Comprar Vidas</button>
+                    <button id="cancelBuyLivesBtn" class="action-btn secondary">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Cargar ethers.js desde múltiples fuentes (prioridad: local, luego CDNs) -->
+    <script>
+        // Función para cargar ethers.js con múltiples fallbacks
+        // PRIORIDAD: Archivo local primero (más rápido y confiable)
+        function loadEthers() {
+            const cdnSources = [
+                "{{ url_for('static', filename='ethers.umd.min.js') }}", // Primero intentar local
+                'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js',
+                'https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js',
+                'https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js'
+            ];
+            
+            let sourceIndex = 0;
+            let checkAttempts = 0;
+            const maxCheckAttempts = 10;
+            
+            function tryLoadEthers(index) {
+                if (index >= cdnSources.length) {
+                    console.error('❌ Todos los CDNs fallaron. ethers.js no se pudo cargar.');
+                    alert('Error: No se pudo cargar ethers.js desde ningún servidor.\n\nPor favor, verifica que el archivo ethers.umd.min.js esté en la carpeta static/');
+                    return;
+                }
+                
+                console.log('🔄 Intentando cargar ethers.js desde:', cdnSources[index]);
+                
+                const script = document.createElement('script');
+                script.src = cdnSources[index];
+                script.async = false; // Cargar de forma síncrona para mejor control
+                
+                function checkEthersLoaded() {
+                    checkAttempts++;
+                        if (typeof ethers !== 'undefined') {
+                            console.log('✅ ethers.js cargado exitosamente desde:', cdnSources[index], 'versión:', ethers.version || 'desconocida');
+                            
+                            // Cargar blockchain.js después de que ethers esté disponible
+                            const blockchainScript = document.createElement('script');
+                            blockchainScript.src = "{{ url_for('static', filename='blockchain.js') }}";
+                            blockchainScript.onload = function() {
+                                console.log('✅ blockchain.js cargado correctamente');
+                                // Verificar que el botón esté disponible
+                                setTimeout(() => {
+                                    const btn = document.getElementById('connectWalletBtn');
+                                    if (btn) {
+                                        console.log('✅ Botón connectWalletBtn está disponible en el DOM');
+                                    } else {
+                                        console.warn('⚠️ Botón connectWalletBtn aún no está en el DOM');
+                                    }
+                                }, 100);
+                            };
+                            blockchainScript.onerror = function() {
+                                console.error('❌ Error al cargar blockchain.js');
+                                alert('Error al cargar blockchain.js');
+                            };
+                            document.body.appendChild(blockchainScript);
+                            
+                            // Cargar game.js (no depende de ethers)
+                            const gameScript = document.createElement('script');
+                            gameScript.src = "{{ url_for('static', filename='game.js') }}";
+                            gameScript.onerror = function() {
+                                console.error('❌ Error al cargar game.js');
+                            };
+                            document.body.appendChild(gameScript);
+                        } else if (checkAttempts < maxCheckAttempts) {
+                        // Esperar un poco más y verificar nuevamente
+                        setTimeout(checkEthersLoaded, 200);
+                    } else {
+                        // Si después de varios intentos no está disponible, probar siguiente fuente
+                        console.warn('⚠️ ethers no está disponible después de', maxCheckAttempts, 'intentos desde:', cdnSources[index]);
+                        checkAttempts = 0;
+                        tryLoadEthers(index + 1);
+                    }
+                }
+                
+                script.onload = function() {
+                    console.log('📦 Script de ethers.js cargado, verificando disponibilidad...');
+                    // Dar un momento para que ethers se inicialice completamente
+                    setTimeout(checkEthersLoaded, 100);
+                };
+                
+                script.onerror = function() {
+                    console.warn('⚠️ Error al cargar script desde:', cdnSources[index], '- intentando siguiente...');
+                    checkAttempts = 0;
+                    tryLoadEthers(index + 1);
+                };
+                
+                document.head.appendChild(script);
+            }
+            
+            // Comenzar con la primera fuente
+            tryLoadEthers(0);
+        }
+        
+        // Iniciar carga cuando el DOM esté listo
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadEthers);
+        } else {
+            loadEthers();
+        }
+    </script>
+</body>
+</html>
