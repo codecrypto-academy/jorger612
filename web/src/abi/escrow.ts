@@ -1,0 +1,80 @@
+export const ESCROW_ABI = [
+  {
+    inputs: [{ internalType: "address", name: "token", type: "address" }],
+    name: "addToken",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getAllowedTokens",
+    outputs: [{ internalType: "address[]", name: "", type: "address[]" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getAllOperations",
+    outputs: [
+      {
+        components: [
+          { internalType: "uint256", name: "id", type: "uint256" },
+          { internalType: "address", name: "user1", type: "address" },
+          { internalType: "address", name: "tokenA", type: "address" },
+          { internalType: "address", name: "tokenB", type: "address" },
+          { internalType: "uint256", name: "amountA", type: "uint256" },
+          { internalType: "uint256", name: "amountB", type: "uint256" },
+          { internalType: "bool", name: "isActive", type: "bool" },
+          { internalType: "uint256", name: "closedAt", type: "uint256" },
+        ],
+        internalType: "struct Escrow.Operation[]",
+        name: "",
+        type: "tuple[]",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "address", name: "tokenA", type: "address" },
+      { internalType: "address", name: "tokenB", type: "address" },
+      { internalType: "uint256", name: "amountA", type: "uint256" },
+      { internalType: "uint256", name: "amountB", type: "uint256" },
+    ],
+    name: "createOperation",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "operationId", type: "uint256" }],
+    name: "cancelOperation",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "operationId", type: "uint256" }],
+    name: "completeOperation",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "owner",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getNextOperationId",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+

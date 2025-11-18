@@ -1,0 +1,20 @@
+rjorgea@LAPTOP-ATPQUCMA:~/scrow-rj$ cd sc
+rjorgea@LAPTOP-ATPQUCMA:~/scrow-rj/sc$ forge test
+[⠊] Compiling...
+[⠘] Compiling 19 files with Solc 0.8.30
+[⠊] Solc 0.8.30 finished in 1.72s
+Compiler run successful!
+
+Ran 8 tests for test/Escrow.t.sol:EscrowTest
+[PASS] testAddToken() (gas: 940169)
+[PASS] testAddTokenOnlyOwner() (gas: 890215)
+[PASS] testCancelOperation() (gas: 272152)
+[PASS] testCancelOperationOnlyCreator() (gas: 284789)
+[PASS] testCannotCompleteOwnOperation() (gas: 342390)
+[PASS] testCannotCreateOperationWithSameTokens() (gas: 53652)
+[PASS] testCompleteOperation() (gas: 347715)
+[PASS] testCreateOperation() (gas: 287355)
+Suite result: ok. 8 passed; 0 failed; 0 skipped; finished in 30.64ms (32.04ms CPU time)
+
+Ran 1 test suite in 90.03ms (30.64ms CPU time): 8 tests passed, 0 failed, 0 skipped (8 total tests)
+rjorgea@LAPTOP-ATPQUCMA:~/scrow-rj/sc$ 
