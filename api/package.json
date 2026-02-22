@@ -1,0 +1,16 @@
+{
+  "name": "rbac-permissions-api",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "API de consumo RBAC - Árbol de permisos por address y login",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "node --watch src/app.js"
+  },
+  "dependencies": {
+    "fastify": "^4.28.1",
+    "@fastify/cors": "^9.0.1",
+    "ethers": "^6.13.1"
+  }
+}
