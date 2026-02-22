@@ -5,26 +5,46 @@ import "forge-std/Test.sol";
 import "../src-eth/SecurityManager.sol";
 
 contract SecurityManagerTest is Test {
-
     SecurityManager public sm;
-    address public owner    = address(this);
+    address public owner = address(this);
     address public attacker = makeAddr("attacker");
 
     event RolCreado(uint32 indexed id, string nombre, uint256 timestamp, address indexed ejecutor);
-    event RolModificado(uint32 indexed id, string nombreAnterior, string nombreNuevo, uint256 timestamp, address indexed ejecutor);
+    event RolModificado(
+        uint32 indexed id, string nombreAnterior, string nombreNuevo, uint256 timestamp, address indexed ejecutor
+    );
     event RolInhabilitado(uint32 indexed id, uint256 timestamp, address indexed ejecutor);
-    event UsuarioCreado(uint32 indexed id, string login, string nombre, uint32 indexed rolId, uint256 timestamp, address indexed ejecutor);
-    event UsuarioModificado(uint32 indexed id, string login, string nombre, uint32 rolIdAnterior, uint32 rolIdNuevo, uint256 timestamp, address indexed ejecutor);
+    event UsuarioCreado(
+        uint32 indexed id,
+        string login,
+        string nombre,
+        uint32 indexed rolId,
+        uint256 timestamp,
+        address indexed ejecutor
+    );
+    event UsuarioModificado(
+        uint32 indexed id,
+        string login,
+        string nombre,
+        uint32 rolIdAnterior,
+        uint32 rolIdNuevo,
+        uint256 timestamp,
+        address indexed ejecutor
+    );
     event UsuarioInhabilitado(uint32 indexed id, uint256 timestamp, address indexed ejecutor);
     event CuentaCreada(address indexed wallet, string nombre, uint256 fechaHora);
     event CuentaActualizada(address indexed wallet, string nuevoNombre, uint256 fechaHora);
     event CuentaEliminada(address indexed wallet, uint256 fechaHora);
 
     event MenuCreado(uint32 indexed id, string nombre, uint256 timestamp, address indexed ejecutor);
-    event MenuModificado(uint32 indexed id, string nombreAnterior, string nombreNuevo, uint256 timestamp, address indexed ejecutor);
+    event MenuModificado(
+        uint32 indexed id, string nombreAnterior, string nombreNuevo, uint256 timestamp, address indexed ejecutor
+    );
     event MenuInhabilitado(uint32 indexed id, uint256 timestamp, address indexed ejecutor);
     event MenuVinculadoARol(uint32 indexed rolId, uint32 indexed menuId, uint256 timestamp, address indexed ejecutor);
-    event MenuDesvinculadoDeRol(uint32 indexed rolId, uint32 indexed menuId, uint256 timestamp, address indexed ejecutor);
+    event MenuDesvinculadoDeRol(
+        uint32 indexed rolId, uint32 indexed menuId, uint256 timestamp, address indexed ejecutor
+    );
 
     function setUp() public {
         sm = new SecurityManager();
@@ -38,7 +58,7 @@ contract SecurityManagerTest is Test {
 
     function test_CrearRol_AlmacenaEstadoCorrecto() public {
         uint32 id = sm.crearRol("Supervisor");
-        (uint32 rId, string memory rNombre, bool rActivo, , address rEjecutor) = sm.roles(id);
+        (uint32 rId, string memory rNombre, bool rActivo,, address rEjecutor) = sm.roles(id);
         assertEq(rId, id);
         assertEq(rNombre, "Supervisor");
         assertTrue(rActivo);
@@ -47,10 +67,10 @@ contract SecurityManagerTest is Test {
 
     function test_InhabilitarRol_CambiaEstadoActivo() public {
         uint32 id = sm.crearRol("Auditor");
-        (, , bool activoAntes, , ) = sm.roles(id);
+        (,, bool activoAntes,,) = sm.roles(id);
         assertTrue(activoAntes);
         sm.inhabilitarRol(id);
-        (, , bool activoDespues, , ) = sm.roles(id);
+        (,, bool activoDespues,,) = sm.roles(id);
         assertFalse(activoDespues);
     }
 
@@ -93,17 +113,17 @@ contract SecurityManagerTest is Test {
     }
 
     function test_InhabilitarUsuario_CambiaEstadoActivo() public {
-        uint32 rolId     = sm.crearRol("Admin");
+        uint32 rolId = sm.crearRol("Admin");
         uint32 usuarioId = sm.crearUsuario("jane", "Jane Doe", rolId);
-        (, , , , bool activoAntes, , ) = sm.usuarios(usuarioId);
+        (,,,, bool activoAntes,,) = sm.usuarios(usuarioId);
         assertTrue(activoAntes);
         sm.inhabilitarUsuario(usuarioId);
-        (, , , , bool activoDespues, , ) = sm.usuarios(usuarioId);
+        (,,,, bool activoDespues,,) = sm.usuarios(usuarioId);
         assertFalse(activoDespues);
     }
 
     function test_InhabilitarUsuario_EmiteEventoConEjecutorCorrecto() public {
-        uint32 rolId     = sm.crearRol("Admin");
+        uint32 rolId = sm.crearRol("Admin");
         uint32 usuarioId = sm.crearUsuario("bob", "Bob", rolId);
         vm.expectEmit(true, true, false, true);
         emit UsuarioInhabilitado(usuarioId, block.timestamp, owner);
@@ -111,7 +131,7 @@ contract SecurityManagerTest is Test {
     }
 
     function test_ModificarUsuario_RolInexistente_Revierte() public {
-        uint32 rolId     = sm.crearRol("Admin");
+        uint32 rolId = sm.crearRol("Admin");
         uint32 usuarioId = sm.crearUsuario("alice", "Alice", rolId);
         vm.expectRevert(abi.encodeWithSelector(SecurityManager.RolNoExiste.selector, uint32(999)));
         sm.modificarUsuario(usuarioId, "alice", "Alice", 999);
@@ -125,15 +145,15 @@ contract SecurityManagerTest is Test {
 
     function test_InhabilitarMenu_CambiaEstadoActivo() public {
         uint32 menuId = sm.crearMenu("Reportes");
-        (, , bool activoAntes, , ) = sm.menus(menuId);
+        (,, bool activoAntes,,) = sm.menus(menuId);
         assertTrue(activoAntes);
         sm.inhabilitarMenu(menuId);
-        (, , bool activoDespues, , ) = sm.menus(menuId);
+        (,, bool activoDespues,,) = sm.menus(menuId);
         assertFalse(activoDespues);
     }
 
     function test_VincularMenuARol_EmiteEventoCorrecto() public {
-        uint32 rolId  = sm.crearRol("Admin");
+        uint32 rolId = sm.crearRol("Admin");
         uint32 menuId = sm.crearMenu("Dashboard");
         vm.expectEmit(true, true, false, true);
         emit MenuVinculadoARol(rolId, menuId, block.timestamp, owner);
@@ -141,7 +161,7 @@ contract SecurityManagerTest is Test {
     }
 
     function test_VincularMenuARol_Doble_Revierte() public {
-        uint32 rolId  = sm.crearRol("Admin");
+        uint32 rolId = sm.crearRol("Admin");
         uint32 menuId = sm.crearMenu("Config");
         sm.vincularMenuARol(rolId, menuId);
         vm.expectRevert(abi.encodeWithSelector(SecurityManager.MenuYaVinculado.selector, rolId, menuId));
@@ -149,7 +169,7 @@ contract SecurityManagerTest is Test {
     }
 
     function test_DesvincularMenuDeRol_DesactivaAcceso() public {
-        uint32 rolId  = sm.crearRol("Admin");
+        uint32 rolId = sm.crearRol("Admin");
         uint32 menuId = sm.crearMenu("Usuarios");
         sm.vincularMenuARol(rolId, menuId);
         assertTrue(sm.verificarAcceso(rolId, menuId));
@@ -158,7 +178,7 @@ contract SecurityManagerTest is Test {
     }
 
     function test_ObtenerMenusPorRol_RetornaMenusVinculados() public {
-        uint32 rolId   = sm.crearRol("Admin");
+        uint32 rolId = sm.crearRol("Admin");
         uint32 menuId1 = sm.crearMenu("MenuA");
         uint32 menuId2 = sm.crearMenu("MenuB");
         sm.vincularMenuARol(rolId, menuId1);
