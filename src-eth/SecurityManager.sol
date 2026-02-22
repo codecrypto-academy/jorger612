@@ -20,31 +20,31 @@ contract SecurityManager is Ownable {
         address wallet;
         string nombre;
         uint256 fechaHora; // En Solidity usamos uint256 para timestamps
-        bool activa;       // Para borrado lógico
+        bool activa; // Para borrado lógico
     }
 
     struct Rol {
-        uint32  id;
-        string  nombre;
-        bool    activo;
+        uint32 id;
+        string nombre;
+        bool activo;
         uint256 timestamp;
         address ejecutor;
     }
 
     struct Usuario {
-        uint32  id;
-        string  login;
-        string  nombre;
-        uint32  rolId;
-        bool    activo;
+        uint32 id;
+        string login;
+        string nombre;
+        uint32 rolId;
+        bool activo;
         uint256 timestamp;
         address ejecutor;
     }
 
     struct Menu {
-        uint32  id;
-        string  nombre;
-        bool    activo;
+        uint32 id;
+        string nombre;
+        bool activo;
         uint256 timestamp;
         address ejecutor;
     }
@@ -52,13 +52,13 @@ contract SecurityManager is Ownable {
     struct MenuRol {
         uint32 menuId;
         uint32 rolId;
-        bool   activo;
+        bool activo;
     }
 
     mapping(address => CuentaAutorizada) public cuentas;
-    mapping(uint32 => Rol)     public roles;
+    mapping(uint32 => Rol) public roles;
     mapping(uint32 => Usuario) public usuarios;
-    mapping(uint32 => Menu)    public menus;
+    mapping(uint32 => Menu) public menus;
     mapping(uint32 => uint32[]) public menusPorRol;
     mapping(uint32 => mapping(uint32 => MenuRol)) public menuRolAsociacion;
 
@@ -74,44 +74,61 @@ contract SecurityManager is Ownable {
     event CuentaCreada(address indexed wallet, string nombre, uint256 fechaHora);
     event CuentaActualizada(address indexed wallet, string nuevoNombre, uint256 fechaHora);
     event CuentaEliminada(address indexed wallet, uint256 fechaHora);
-    
+
     event RolCreado(uint32 indexed id, string nombre, uint256 timestamp, address indexed ejecutor);
-    event RolModificado(uint32 indexed id, string nombreAnterior, string nombreNuevo, uint256 timestamp, address indexed ejecutor);
+    event RolModificado(
+        uint32 indexed id, string nombreAnterior, string nombreNuevo, uint256 timestamp, address indexed ejecutor
+    );
     event RolInhabilitado(uint32 indexed id, uint256 timestamp, address indexed ejecutor);
 
-    event UsuarioCreado(uint32 indexed id, string login, string nombre, uint32 indexed rolId, uint256 timestamp, address indexed ejecutor);
-    event UsuarioModificado(uint32 indexed id, string login, string nombre, uint32 rolIdAnterior, uint32 rolIdNuevo, uint256 timestamp, address indexed ejecutor);
+    event UsuarioCreado(
+        uint32 indexed id,
+        string login,
+        string nombre,
+        uint32 indexed rolId,
+        uint256 timestamp,
+        address indexed ejecutor
+    );
+    event UsuarioModificado(
+        uint32 indexed id,
+        string login,
+        string nombre,
+        uint32 rolIdAnterior,
+        uint32 rolIdNuevo,
+        uint256 timestamp,
+        address indexed ejecutor
+    );
     event UsuarioInhabilitado(uint32 indexed id, uint256 timestamp, address indexed ejecutor);
 
     event MenuCreado(uint32 indexed id, string nombre, uint256 timestamp, address indexed ejecutor);
-    event MenuModificado(uint32 indexed id, string nombreAnterior, string nombreNuevo, uint256 timestamp, address indexed ejecutor);
+    event MenuModificado(
+        uint32 indexed id, string nombreAnterior, string nombreNuevo, uint256 timestamp, address indexed ejecutor
+    );
     event MenuInhabilitado(uint32 indexed id, uint256 timestamp, address indexed ejecutor);
 
     event MenuVinculadoARol(uint32 indexed rolId, uint32 indexed menuId, uint256 timestamp, address indexed ejecutor);
-    event MenuDesvinculadoDeRol(uint32 indexed rolId, uint32 indexed menuId, uint256 timestamp, address indexed ejecutor);
+    event MenuDesvinculadoDeRol(
+        uint32 indexed rolId, uint32 indexed menuId, uint256 timestamp, address indexed ejecutor
+    );
 
     constructor() {}
 
-// Nueva seccion cuentas CuentaAutorizada
+    // Nueva seccion cuentas CuentaAutorizada
 
-// CREATE: Agregar nueva cuenta autorizada
+    // CREATE: Agregar nueva cuenta autorizada
     function crearCuenta(address _wallet, string calldata _nombre) external onlyOwner {
         require(_wallet != address(0), "Direccion invalida");
         require(cuentas[_wallet].wallet == address(0), "La cuenta ya existe");
 
-        cuentas[_wallet] = CuentaAutorizada({
-            wallet: _wallet,
-            nombre: _nombre,
-            fechaHora: block.timestamp,
-            activa: true
-        });
+        cuentas[_wallet] =
+            CuentaAutorizada({wallet: _wallet, nombre: _nombre, fechaHora: block.timestamp, activa: true});
 
         listaDirecciones.push(_wallet);
 
         emit CuentaCreada(_wallet, _nombre, block.timestamp);
     }
 
-    // READ: Obtener datos de una cuenta (Solidity ya genera un getter automático para el mapping, 
+    // READ: Obtener datos de una cuenta (Solidity ya genera un getter automático para el mapping,
     // pero esta función es más explícita)
     function obtenerCuenta(address _wallet) external view returns (CuentaAutorizada memory) {
         require(cuentas[_wallet].wallet != address(0), "La cuenta no existe");
@@ -121,7 +138,7 @@ contract SecurityManager is Ownable {
     // UPDATE: Modificar nombre de cuenta existente
     function actualizarCuenta(address _wallet, string calldata _nuevoNombre) external onlyOwner {
         require(cuentas[_wallet].wallet != address(0), "La cuenta no existe");
-        
+
         cuentas[_wallet].nombre = _nuevoNombre;
         cuentas[_wallet].fechaHora = block.timestamp; // Actualizamos el último movimiento
 
@@ -133,27 +150,21 @@ contract SecurityManager is Ownable {
         require(cuentas[_wallet].wallet != address(0), "La cuenta no existe");
 
         delete cuentas[_wallet];
-        
-        // Nota: El address permanecerá en listaDirecciones pero al consultar el mapping 
+
+        // Nota: El address permanecerá en listaDirecciones pero al consultar el mapping
         // devolverá valores vacíos. Para una app real, podrías filtrar en el frontend.
 
         emit CuentaEliminada(_wallet, block.timestamp);
     }
 
-// Fin de cuentas autorizadas
-
+    // Fin de cuentas autorizadas
 
     function crearRol(string calldata nombre) external returns (uint32 nuevoId) {
         _rolCounter.increment();
         nuevoId = uint32(_rolCounter.current());
 
-        roles[nuevoId] = Rol({
-            id: nuevoId,
-            nombre: nombre,
-            activo: true,
-            timestamp: block.timestamp,
-            ejecutor: msg.sender
-        });
+        roles[nuevoId] =
+            Rol({id: nuevoId, nombre: nombre, activo: true, timestamp: block.timestamp, ejecutor: msg.sender});
 
         emit RolCreado(nuevoId, nombre, block.timestamp, msg.sender);
     }
@@ -231,13 +242,8 @@ contract SecurityManager is Ownable {
         _menuCounter.increment();
         nuevoId = uint32(_menuCounter.current());
 
-        menus[nuevoId] = Menu({
-            id: nuevoId,
-            nombre: nombre,
-            activo: true,
-            timestamp: block.timestamp,
-            ejecutor: msg.sender
-        });
+        menus[nuevoId] =
+            Menu({id: nuevoId, nombre: nombre, activo: true, timestamp: block.timestamp, ejecutor: msg.sender});
 
         emit MenuCreado(nuevoId, nombre, block.timestamp, msg.sender);
     }
@@ -268,11 +274,7 @@ contract SecurityManager is Ownable {
         if (menus[menuId].id == 0) revert MenuNoExiste(menuId);
         if (menuRolAsociacion[rolId][menuId].activo) revert MenuYaVinculado(rolId, menuId);
 
-        menuRolAsociacion[rolId][menuId] = MenuRol({
-            menuId: menuId,
-            rolId: rolId,
-            activo: true
-        });
+        menuRolAsociacion[rolId][menuId] = MenuRol({menuId: menuId, rolId: rolId, activo: true});
         menusPorRol[rolId].push(menuId);
 
         emit MenuVinculadoARol(rolId, menuId, block.timestamp, msg.sender);
