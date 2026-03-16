@@ -1,1 +1,8 @@
 test-ledger
+academic_sol/test-ledger/
+web/.next/
+
+# Environment variables (Pinata keys, etc.)
+.env
+.env.local
+.env*.local
