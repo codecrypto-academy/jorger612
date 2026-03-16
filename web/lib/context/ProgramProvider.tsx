@@ -3,12 +3,12 @@
 import React, { useMemo, ReactNode } from "react";
 import { useAnchorWallet, useConnection } from "@solana/wallet-adapter-react";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
-import { Traza } from "@/types/traza";
-import TrazaIDL from "@/types/traza.json";
+import { AcademicSol } from "@/types/academic_sol";
+import AcademicSolIDL from "@/types/academic_sol.json";
 import { PROGRAM_ID } from "@/lib/solana/constants";
 
 interface ProgramContextType {
-  program: Program<Traza> | null;
+  program: Program<AcademicSol> | null;
   provider: AnchorProvider | null;
   isReady: boolean;
 }
@@ -33,7 +33,10 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
         commitment: "confirmed",
       });
 
-      const program = new Program<Traza>(TrazaIDL as any, newProvider);
+      const program = new Program<AcademicSol>(
+        AcademicSolIDL as any,
+        newProvider
+      );
 
       return { program, provider: newProvider, isReady: true };
     } catch (error) {

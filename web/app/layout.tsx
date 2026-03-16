@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Solana Trazabilidad",
-  description: "Track products through the supply chain on Solana",
+  title: "Certificación Académica Digital",
+  description: "Sistema de emisión y verificación de certificados académicos en Solana",
 };
 
 export default function RootLayout({

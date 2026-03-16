@@ -25,3 +25,17 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Ensure JSON-LD popup has black text for readability (dark mode fix) */
+.json-ld-popup-content pre,
+.json-ld-popup-content .font-mono {
+  color: #000 !important;
+}
+
+/* Ensure all form inputs have black text (dark mode fix) */
+input,
+select,
+textarea {
+  color: #000 !important;
+}
+
