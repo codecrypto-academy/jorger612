@@ -10,7 +10,7 @@ export default defineConfig({
   reporter:     [['list'], ['html', { outputFolder: 'e2e-report', open: 'never' }]],
 
   use: {
-    baseURL:           'http://localhost:3000',
+    baseURL:           'http://localhost:3006',
     headless:          true,
     viewport:          { width: 1280, height: 800 },
     actionTimeout:     15_000,

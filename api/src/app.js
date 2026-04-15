@@ -2,7 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { permissionsRoutes } from './routes/permissions.routes.js';
 
-const PORT = Number(process.env.PORT) || 3001;
+const PORT = Number(process.env.PORT) || 3005;
 
 const app = Fastify({ logger: true });
 
