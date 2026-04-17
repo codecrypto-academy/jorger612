@@ -12,7 +12,7 @@ jest.mock('@/lib/contract', () => ({
 
 const mockWallet = (overrides = {}) => ({
   account: null, chainId: null, isConnected: false, isOwner: false,
-  provider: null, signer: null, connect: jest.fn(), disconnect: jest.fn(), error: null,
+  provider: null, signer: null, connect: jest.fn(), disconnect: jest.fn(), switchToTargetChain: jest.fn(), error: null,
   ...overrides,
 });
 

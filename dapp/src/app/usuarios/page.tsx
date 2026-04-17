@@ -87,48 +87,62 @@ export default function UsuariosPage() {
   const cuentaNoRegistrada = isConnected && !authLoading && !isAuthorized;
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 animate-fadeIn">
-      {!isConnected && (
-        <div className="px-5 py-4 rounded-2xl bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#D4AF37] text-sm font-medium">
-          Conecta tu wallet para visualizar y gestionar usuarios.
-        </div>
-      )}
+    <div style={{ maxWidth: 1152, margin: '0 auto' }}>
+      {!isConnected && <div className="ds-callout" style={{ marginBottom: 20 }}>Conecta tu wallet para visualizar y gestionar usuarios.</div>}
 
-      {cuentaNoRegistrada && <AlertaCuentaNoAutorizada />}
+      {cuentaNoRegistrada && <AlertaCuentaNoAutorizada style={{ marginBottom: 20 }} />}
 
       {isConnected && (authLoading || isAuthorized) && (
         <>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400">
-            <UsersIcon className="w-5 h-5" />
+          <div className="ds-page-header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 12,
+                  background: 'rgba(255,255,255,0.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  border: '1px solid rgba(255,255,255,0.35)',
+                }}
+              >
+                <UsersIcon style={{ width: 24, height: 24 }} />
+              </div>
+              <div className="ds-page-header__titles">
+                <h2>Gestion de Usuarios</h2>
+                <p>
+                  {usuarios.length} registros · {usuarios.filter((u) => u.activo).length} activos
+                </p>
+              </div>
+            </div>
+            <div className="ds-toolbar">
+              <Button variant="secondary" size="sm" onClick={() => { fetchUsuarios(); fetchRoles(); }} disabled={loading}>
+                <ArrowPathIcon style={{ width: 16, height: 16, animation: loading ? 'dsSpin 0.8s linear infinite' : undefined }} />
+                Actualizar
+              </Button>
+              {canManage && (
+                <Button size="sm" onClick={handleCrear} data-testid="btn-crear-usuario">
+                  <PlusCircleIcon style={{ width: 16, height: 16 }} />
+                  Crear Usuario
+                </Button>
+              )}
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg font-bold text-[#FAFBFC] tracking-tight">Gestion de Usuarios</h2>
-            <p className="text-xs text-[#6B7280]">{usuarios.length} registros · {usuarios.filter(u => u.activo).length} activos</p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={() => { fetchUsuarios(); fetchRoles(); }} disabled={loading}>
-            <ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Actualizar
-          </Button>
-          {canManage && (
-            <Button size="sm" onClick={handleCrear} data-testid="btn-crear-usuario">
-              <PlusCircleIcon className="w-4 h-4" />
-              Crear Usuario
-            </Button>
-          )}
-        </div>
-      </div>
 
-      {confirmId !== null && (
-        <div className="px-5 py-5 rounded-2xl bg-[#4C1D1D]/30 border border-red-500/40 flex flex-wrap items-center gap-4 animate-fadeIn">
-          <p className="text-sm text-red-200 flex-1 font-medium">¿Confirmas inhabilitar al Usuario #{confirmId}?</p>
-          <Button variant="danger" size="sm" loading={inhibLoading} onClick={() => handleInhabilitar(confirmId)} data-testid="btn-confirm-inhabilitar-usuario">Inhabilitar</Button>
-          <Button variant="ghost" size="sm" onClick={() => setConfirmId(null)}>Cancelar</Button>
-        </div>
-      )}
+          {confirmId !== null && (
+            <div className="ds-confirm-row" style={{ marginBottom: 20 }}>
+              <p style={{ margin: 0, flex: 1, fontWeight: 600, fontSize: 14 }}>¿Confirmas inhabilitar al Usuario #{confirmId}?</p>
+              <Button variant="danger" size="sm" loading={inhibLoading} onClick={() => handleInhabilitar(confirmId)} data-testid="btn-confirm-inhabilitar-usuario">
+                Inhabilitar
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setConfirmId(null)}>
+                Cancelar
+              </Button>
+            </div>
+          )}
 
       <UsuarioTable
         usuarios={usuarios}

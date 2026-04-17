@@ -12,43 +12,30 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
 }
 
-const variants: Record<Variant, string> = {
-  primary:
-    'bg-gradient-to-r from-[#C9A227] to-[#B8860B] hover:from-[#D4AF37] hover:to-[#C9A227] !text-white border border-[#C9A227]/40 shadow-lg shadow-[#C9A227]/20 transition-all duration-300',
-  secondary:
-    'bg-[#191D24] hover:bg-[#232A34] !text-white border border-[#2F3844] hover:border-[#3D4852] transition-all duration-300',
-  danger:
-    'bg-[#4C1D1D]/80 hover:bg-[#5C2424] !text-white border border-[#7F1D1D]/60 hover:border-[#991B1B] transition-all duration-300',
-  ghost:
-    'bg-[#191D24]/60 hover:bg-[#232A34] !text-white border border-[#2F3844] hover:border-[#3D4852] transition-all duration-300',
-  gold:
-    'bg-[#C9A227]/20 hover:bg-[#C9A227]/30 !text-[#D4AF37] border border-[#C9A227]/50 hover:border-[#C9A227] transition-all duration-300',
+const variantClass: Record<Variant, string> = {
+  primary: 'ds-btn',
+  secondary: 'ds-btn ds-btn--secondary',
+  danger: 'ds-btn ds-btn--danger',
+  ghost: 'ds-btn ds-btn--ghost',
+  gold: 'ds-btn ds-btn--secondary-pink',
 };
 
-const sizes: Record<Size, string> = {
-  sm: 'px-4 py-2 text-xs',
-  md: 'px-5 py-2.5 text-sm',
-  lg: 'px-6 py-3 text-base',
+const sizeClass: Record<Size, string> = {
+  sm: 'ds-btn--sm',
+  md: '',
+  lg: 'ds-btn--lg',
 };
 
 export function Button({ variant = 'primary', size = 'md', loading, disabled, children, className = '', ...props }: ButtonProps) {
+  const v = variantClass[variant];
+  const s = sizeClass[size];
   return (
     <button
       disabled={disabled || loading}
-      className={`
-        inline-flex items-center justify-center gap-2 font-medium rounded-xl
-        cursor-pointer
-        disabled:opacity-50 disabled:cursor-not-allowed
-        ${variants[variant]} ${sizes[size]} ${className}
-      `}
+      className={`${v}${s ? ` ${s}` : ''}${className ? ` ${className}` : ''}`.trim()}
       {...props}
     >
-      {loading && (
-        <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-      )}
+      {loading && <span className="ds-spinner" style={{ width: 18, height: 18, borderWidth: 2 }} aria-hidden />}
       {children}
     </button>
   );

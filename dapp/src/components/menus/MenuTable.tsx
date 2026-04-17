@@ -1,6 +1,6 @@
 'use client';
 
-import { Menu, Rol } from '@/types';
+import { Menu } from '@/types';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -8,7 +8,6 @@ import { Squares2X2Icon, PencilSquareIcon, NoSymbolIcon, LinkIcon, ClockIcon } f
 
 interface MenuTableProps {
   menus: Menu[];
-  roles: Rol[];
   loading: boolean;
   isOwner: boolean;
   onModificar: (m: Menu) => void;
@@ -18,42 +17,54 @@ interface MenuTableProps {
 }
 
 export function MenuTable({ menus, loading, isOwner, onModificar, onInhabilitar, onAsociarRol, onHistorial }: MenuTableProps) {
-  if (loading) return <div data-testid="menu-table-loading" className="space-y-2">{[...Array(4)].map((_, i) => <div key={i} className="h-14 bg-[#191D24] rounded-xl animate-pulse" />)}</div>;
+  if (loading) {
+    return (
+      <div data-testid="menu-table-loading">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="ds-skeleton" />
+        ))}
+      </div>
+    );
+  }
 
-  if (!menus.length) return <EmptyState title="Sin menus registrados" description="Crea el primer menu y asocia roles de acceso." icon={<Squares2X2Icon className="w-12 h-12" />} />;
+  if (!menus.length) {
+    return <EmptyState title="Sin menus registrados" description="Crea el primer menu y asocia roles de acceso." icon={<Squares2X2Icon style={{ width: 48, height: 48 }} />} />;
+  }
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-[#232A34] bg-[#0D0F12] shadow-xl shadow-black/30" data-testid="menu-table">
-      <table className="w-full text-sm">
+    <div className="ds-table-wrap" data-testid="menu-table">
+      <table className="ds-table">
         <thead>
-          <tr className="border-b border-[#232A34] bg-[#191D24]">
-            <th className="px-5 py-4 text-left text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider">ID</th>
-            <th className="px-5 py-4 text-left text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider">Nombre</th>
-            <th className="px-5 py-4 text-left text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider">Estado</th>
-            <th className="px-5 py-4 text-right text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider">Acciones</th>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Estado</th>
+            <th style={{ textAlign: 'right' }}>Acciones</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#232A34]">
-          {menus.map(m => (
-            <tr key={m.id} className="hover:bg-[#191D24]/50 transition-colors duration-300">
-              <td className="px-5 py-4 font-mono text-[#6B7280]">#{m.id}</td>
-              <td className="px-5 py-4 font-medium text-[#FAFBFC]">{m.nombre}</td>
-              <td className="px-5 py-4"><Badge activo={m.activo} /></td>
-              <td className="px-5 py-4">
-                <div className="flex items-center justify-end gap-2">
+        <tbody>
+          {menus.map((m) => (
+            <tr key={m.id}>
+              <td style={{ fontFamily: 'var(--ds-font-mono)', fontSize: 13, color: 'var(--ds-gray-600)' }}>#{m.id}</td>
+              <td style={{ fontWeight: 600 }}>{m.nombre}</td>
+              <td>
+                <Badge activo={m.activo} />
+              </td>
+              <td>
+                <div className="ds-table__actions">
                   <Button variant="ghost" size="sm" onClick={() => onHistorial(m)} data-testid={`btn-historial-menu-${m.id}`} aria-label={`Ver historial del menu ${m.nombre}`}>
-                    <ClockIcon className="w-3.5 h-3.5" /> Histórico
+                    <ClockIcon style={{ width: 14, height: 14 }} /> Histórico
                   </Button>
                   {isOwner && (
                     <>
                       <Button variant="gold" size="sm" onClick={() => onAsociarRol(m)} data-testid={`btn-asociar-rol-${m.id}`} aria-label={`Asociar roles a menu ${m.nombre}`}>
-                        <LinkIcon className="w-3.5 h-3.5" /> Roles
+                        <LinkIcon style={{ width: 14, height: 14 }} /> Roles
                       </Button>
                       <Button variant="secondary" size="sm" onClick={() => onModificar(m)} data-testid={`btn-modificar-menu-${m.id}`} disabled={!m.activo}>
-                        <PencilSquareIcon className="w-3.5 h-3.5" /> Modificar
+                        <PencilSquareIcon style={{ width: 14, height: 14 }} /> Modificar
                       </Button>
                       <Button variant="danger" size="sm" onClick={() => onInhabilitar(m)} data-testid={`btn-inhabilitar-menu-${m.id}`} disabled={!m.activo}>
-                        <NoSymbolIcon className="w-3.5 h-3.5" /> Inhabilitar
+                        <NoSymbolIcon style={{ width: 14, height: 14 }} /> Inhabilitar
                       </Button>
                     </>
                   )}

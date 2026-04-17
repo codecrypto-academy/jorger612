@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Usuario, Rol } from '@/types';
 import { getReadOnlyContract } from '@/lib/contract';
-import { UserCircleIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
+import { UserCircleIcon, ShieldCheckIcon, Squares2X2Icon, ArrowLongRightIcon } from '@heroicons/react/24/outline';
 
 interface ArbolModalProps {
   isOpen: boolean;
@@ -62,65 +62,190 @@ export function ArbolModal({ isOpen, onClose, usuario, roles, obtenerMenusPorRol
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Árbol de permisos" size="lg">
       {!usuario ? (
-        <p className="text-sm text-[#6B7280]">Selecciona un usuario.</p>
+        <p style={{ margin: 0, fontSize: 14, color: '#495057' }}>Selecciona un usuario.</p>
       ) : (
-        <div className="max-h-[60vh] overflow-y-auto overflow-x-hidden">
-          <div className="font-sans select-none flex flex-col items-center mx-auto w-full max-w-md">
-            {/* Nivel 1: Usuario (raíz) */}
-            <div className="flex items-center gap-4 pb-6 w-full">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500/25 border-2 border-emerald-500/50 text-emerald-400 shrink-0 shadow-lg shadow-emerald-500/10">
-              <UserCircleIcon className="w-6 h-6" />
-            </div>
-            <div className="flex-1 min-w-0 border-l-2 border-emerald-500/30 pl-4 ml-1">
-              <p className="text-[10px] font-bold text-emerald-400/80 uppercase tracking-widest">Usuario</p>
-              <p className="text-base font-bold text-[#FAFBFC]">{usuario.nombre}</p>
-              <p className="text-xs text-[#6B7280] font-mono mt-0.5">{usuario.login} · #{usuario.id}</p>
-            </div>
+        <div style={{ maxHeight: '70vh', overflowY: 'auto', overflowX: 'hidden' }}>
+          <div
+            style={{
+              marginBottom: 18,
+              padding: '12px 14px',
+              borderRadius: 12,
+              border: '1px solid #e1e5e9',
+              background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
+            }}
+          >
+            <p style={{ margin: 0, fontSize: 13, color: '#495057', fontWeight: 600 }}>
+              Vista jerárquica: <span style={{ color: '#2c3e50' }}>Usuario</span> → <span style={{ color: '#2c3e50' }}>Rol</span> →{' '}
+              <span style={{ color: '#2c3e50' }}>Menús</span>
+            </p>
           </div>
+
+          <div className="ds-tree-grid">
+            {/* Nivel 1: Usuario */}
+            <section
+              style={{
+                border: '1px solid #e1e5e9',
+                borderRadius: 14,
+                background: '#fff',
+                boxShadow: '0 10px 24px rgba(0,0,0,0.08)',
+                padding: 14,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                <div
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: 10,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+                    color: '#fff',
+                  }}
+                >
+                  <UserCircleIcon style={{ width: 21, height: 21 }} />
+                </div>
+                <p style={{ margin: 0, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6c757d', fontWeight: 700 }}>
+                  Usuario
+                </p>
+              </div>
+              <p style={{ margin: '0 0 4px', fontSize: 16, color: '#111', fontWeight: 700 }}>{usuario.nombre}</p>
+              <p style={{ margin: 0, fontSize: 12, color: '#495057', fontFamily: 'var(--ds-font-mono)' }}>
+                {usuario.login} · #{usuario.id}
+              </p>
+            </section>
+
+            <div className="ds-tree-arrow" style={{ color: '#667eea' }}>
+              <ArrowLongRightIcon style={{ width: 30, height: 30 }} />
+            </div>
 
             {/* Nivel 2: Rol */}
-            <div className="flex items-center gap-4 py-4 pl-6 w-full">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-amber-500/25 border-2 border-amber-500/50 text-amber-400 shrink-0 -ml-[2px]">
-              <ShieldCheckIcon className="w-5 h-5" />
-            </div>
-            <div className="flex-1 min-w-0 border-l-2 border-amber-500/30 pl-4 ml-1">
-              <p className="text-[10px] font-bold text-amber-400/80 uppercase tracking-widest">Rol asignado</p>
-              <p className="text-sm font-semibold text-[#FAFBFC]">{rolNombre}</p>
-            </div>
-          </div>
+            <section
+              style={{
+                border: '1px solid #e1e5e9',
+                borderRadius: 14,
+                background: '#fff',
+                boxShadow: '0 10px 24px rgba(0,0,0,0.08)',
+                padding: 14,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                <div
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: 10,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'linear-gradient(135deg, #ffc107 0%, #e0a800 100%)',
+                    color: '#212529',
+                  }}
+                >
+                  <ShieldCheckIcon style={{ width: 20, height: 20 }} />
+                </div>
+                <p style={{ margin: 0, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6c757d', fontWeight: 700 }}>
+                  Rol
+                </p>
+              </div>
+              <p style={{ margin: 0, fontSize: 15, color: '#111', fontWeight: 700 }}>{rolNombre}</p>
+              <p style={{ margin: '6px 0 0', fontSize: 12, color: '#555' }}>Nodo intermedio de permisos</p>
+            </section>
 
-            {/* Nivel 3: Opciones de menú */}
-            <div className="flex flex-col gap-2 py-2 pl-6 w-full">
-              <p className="text-[10px] font-bold text-sky-400/80 uppercase tracking-widest mb-1">
-                Opciones de menú ({loading ? '...' : menus.length})
-              </p>
+            <div className="ds-tree-arrow" style={{ color: '#667eea' }}>
+              <ArrowLongRightIcon style={{ width: 30, height: 30 }} />
+            </div>
+
+            {/* Nivel 3: Menús */}
+            <section
+              style={{
+                border: '1px solid #e1e5e9',
+                borderRadius: 14,
+                background: '#fff',
+                boxShadow: '0 10px 24px rgba(0,0,0,0.08)',
+                padding: 14,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div
+                    style={{
+                      width: 38,
+                      height: 38,
+                      borderRadius: 10,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: 'var(--ds-gradient-primary)',
+                      color: '#fff',
+                    }}
+                  >
+                    <Squares2X2Icon style={{ width: 20, height: 20 }} />
+                  </div>
+                  <p style={{ margin: 0, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6c757d', fontWeight: 700 }}>
+                    Menús ({loading ? '...' : menus.length})
+                  </p>
+                </div>
+              </div>
+
               {loading ? (
-                <div className="space-y-2">
+                <div style={{ display: 'grid', gap: 8 }}>
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-9 bg-[#191D24] rounded-lg animate-pulse" />
+                    <div
+                      key={i}
+                      style={{
+                        height: 42,
+                        borderRadius: 10,
+                        background: 'linear-gradient(90deg, #f1f3f5 20%, #ffffff 45%, #f1f3f5 70%)',
+                        backgroundSize: '200% 100%',
+                        animation: 'dsShimmer 1.1s ease-in-out infinite',
+                        border: '1px solid #e9ecef',
+                      }}
+                    />
                   ))}
                 </div>
               ) : menus.length === 0 ? (
-                <div className="py-4 px-4 rounded-xl bg-[#191D24]/60 border border-dashed border-[#232A34]">
-                  <p className="text-sm text-[#6B7280]">Sin opciones de menú asociadas.</p>
+                <div
+                  style={{
+                    padding: '12px 14px',
+                    borderRadius: 10,
+                    border: '1px dashed #adb5bd',
+                    background: '#f8f9fa',
+                    color: '#495057',
+                    fontSize: 14,
+                  }}
+                >
+                  Sin opciones de menú asociadas.
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div style={{ display: 'grid', gap: 8 }}>
                   {menus.map((m) => (
                     <div
                       key={m.id}
-                      className="py-2.5 px-4 rounded-lg bg-[#191D24] border border-[#232A34] hover:border-sky-500/40 transition-colors"
+                      style={{
+                        borderRadius: 10,
+                        border: '1px solid #e1e5e9',
+                        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                        padding: '10px 12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 8,
+                      }}
                     >
-                      <span className="text-sm font-medium text-[#FAFBFC]">{m.nombre}</span>
-                      {!m.activo && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 ml-2">Inactivo</span>
-                      )}
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ margin: 0, fontSize: 14, color: '#111', fontWeight: 600 }}>{m.nombre}</p>
+                        <p style={{ margin: '2px 0 0', fontSize: 11, color: '#6c757d', fontFamily: 'var(--ds-font-mono)' }}>Menu #{m.id}</p>
+                      </div>
+                      {!m.activo && <span className="ds-badge ds-badge--error">Inactivo</span>}
                     </div>
                   ))}
                 </div>
               )}
-            </div>
+            </section>
           </div>
+
         </div>
       )}
     </Modal>

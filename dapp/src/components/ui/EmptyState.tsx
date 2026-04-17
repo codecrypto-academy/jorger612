@@ -6,10 +6,10 @@ interface EmptyStateProps {
 
 export function EmptyState({ title, description, icon }: EmptyStateProps) {
   return (
-    <div data-testid="empty-state" className="flex flex-col items-center justify-center py-20 text-center">
-      {icon && <div className="mb-5 text-[#6B7280] opacity-80">{icon}</div>}
-      <p className="text-[#E5E7EB] font-medium text-[15px]">{title}</p>
-      <p className="text-sm text-[#6B7280] mt-2 max-w-xs leading-relaxed">{description}</p>
+    <div data-testid="empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 1rem', textAlign: 'center' }}>
+      {icon && <div style={{ marginBottom: 16, color: 'var(--ds-gray-600)', opacity: 0.9 }}>{icon}</div>}
+      <p style={{ margin: 0, fontWeight: 600, fontSize: 15, color: 'var(--ds-text-title)' }}>{title}</p>
+      <p style={{ margin: '10px 0 0', fontSize: 14, color: 'var(--ds-gray-600)', maxWidth: 360, lineHeight: 1.6 }}>{description}</p>
     </div>
   );
 }

@@ -17,9 +17,9 @@ interface CuentaTableProps {
 export function CuentaTable({ cuentas, loading, isOwner, onModificar, onEliminar }: CuentaTableProps) {
   if (loading) {
     return (
-      <div className="space-y-2" data-testid="cuenta-table-loading">
+      <div data-testid="cuenta-table-loading">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-14 bg-[#191D24] rounded-xl animate-pulse" />
+          <div key={i} className="ds-skeleton" />
         ))}
       </div>
     );
@@ -30,32 +30,34 @@ export function CuentaTable({ cuentas, loading, isOwner, onModificar, onEliminar
       <EmptyState
         title="Sin cuentas autorizadas"
         description="Solo el propietario del contrato puede crear cuentas autorizadas."
-        icon={<UserGroupIcon className="w-12 h-12" />}
+        icon={<UserGroupIcon style={{ width: 48, height: 48 }} />}
       />
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-[#232A34] bg-[#0D0F12] shadow-xl shadow-black/30" data-testid="cuenta-table">
-      <table className="w-full text-sm">
+    <div className="ds-table-wrap" data-testid="cuenta-table">
+      <table className="ds-table">
         <thead>
-          <tr className="border-b border-[#232A34] bg-[#191D24]">
-            <th className="px-5 py-4 text-left text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider">Wallet</th>
-            <th className="px-5 py-4 text-left text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider">Nombre</th>
-            <th className="px-5 py-4 text-left text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider">Estado</th>
-            <th className="px-5 py-4 text-right text-[11px] font-semibold text-[#9CA3AF] uppercase tracking-wider">Acciones</th>
+          <tr>
+            <th>Wallet</th>
+            <th>Nombre</th>
+            <th>Estado</th>
+            <th style={{ textAlign: 'right' }}>Acciones</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#232A34]">
+        <tbody>
           {cuentas.map((c) => (
-            <tr key={c.wallet} className="hover:bg-[#191D24]/50 transition-colors duration-300">
-              <td className="px-5 py-4 font-mono text-[#6B7280] text-xs">
+            <tr key={c.wallet}>
+              <td style={{ fontFamily: 'var(--ds-font-mono)', fontSize: 12, color: 'var(--ds-gray-600)' }}>
                 {c.wallet.slice(0, 10)}...{c.wallet.slice(-8)}
               </td>
-              <td className="px-5 py-4 font-medium text-[#FAFBFC]">{c.nombre}</td>
-              <td className="px-4 py-3"><Badge activo={c.activa} /></td>
-              <td className="px-4 py-3">
-                <div className="flex items-center justify-end gap-2">
+              <td style={{ fontWeight: 600 }}>{c.nombre}</td>
+              <td>
+                <Badge activo={c.activa} activeLabel="Activa" inactiveLabel="Inactiva" />
+              </td>
+              <td>
+                <div className="ds-table__actions">
                   {isOwner && (
                     <>
                       <Button
@@ -65,7 +67,7 @@ export function CuentaTable({ cuentas, loading, isOwner, onModificar, onEliminar
                         data-testid={`btn-modificar-cuenta-${c.wallet.slice(-6)}`}
                         aria-label={`Modificar cuenta ${c.nombre}`}
                       >
-                        <PencilSquareIcon className="w-3.5 h-3.5" /> Modificar
+                        <PencilSquareIcon style={{ width: 14, height: 14 }} /> Modificar
                       </Button>
                       <Button
                         variant="danger"
@@ -74,7 +76,7 @@ export function CuentaTable({ cuentas, loading, isOwner, onModificar, onEliminar
                         data-testid={`btn-eliminar-cuenta-${c.wallet.slice(-6)}`}
                         aria-label={`Eliminar cuenta ${c.nombre}`}
                       >
-                        <TrashIcon className="w-3.5 h-3.5" /> Eliminar
+                        <TrashIcon style={{ width: 14, height: 14 }} /> Eliminar
                       </Button>
                     </>
                   )}

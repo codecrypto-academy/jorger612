@@ -2,6 +2,46 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { ethers } from 'ethers';
+import { CHAIN_ID, RPC_URL } from '@/lib/contract';
+
+function chainIdToHex(id: number): string {
+  return `0x${BigInt(id).toString(16)}`;
+}
+
+/**
+ * Pide a MetaMask cambiar a la red configurada (p. ej. Anvil 31337 = 0x7a69).
+ * Si la red no está añadida, usa wallet_addEthereumChain con el RPC del .env.
+ */
+async function ensureTargetChain(ethereum: NonNullable<typeof window.ethereum>) {
+  const targetHex = chainIdToHex(CHAIN_ID);
+  const currentHex = (await ethereum.request({ method: 'eth_chainId' })) as string;
+  const currentId = Number(BigInt(currentHex));
+  if (currentId === CHAIN_ID) return;
+
+  try {
+    await ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: targetHex }],
+    });
+  } catch (err: unknown) {
+    const code = (err as { code?: number })?.code;
+    if (code === 4902) {
+      await ethereum.request({
+        method: 'wallet_addEthereumChain',
+        params: [
+          {
+            chainId: targetHex,
+            chainName: 'Anvil local',
+            nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+            rpcUrls: [RPC_URL],
+          },
+        ],
+      });
+    } else {
+      throw err;
+    }
+  }
+}
 
 interface WalletContextType {
   account: string | null;
@@ -12,6 +52,8 @@ interface WalletContextType {
   signer: ethers.JsonRpcSigner | null;
   connect: () => Promise<void>;
   disconnect: () => void;
+  /** Fuerza wallet_switchEthereumChain hacia CHAIN_ID (y add chain si hace falta). */
+  switchToTargetChain: () => Promise<void>;
   error: string | null;
 }
 
@@ -24,6 +66,7 @@ const WalletContext = createContext<WalletContextType>({
   signer: null,
   connect: async () => {},
   disconnect: () => {},
+  switchToTargetChain: async () => {},
   error: null,
 });
 
@@ -35,16 +78,47 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [isOwner, setIsOwner] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const checkOwner = useCallback(async (addr: string) => {
+  const checkOwner = useCallback(async (addr: string, walletProvider?: ethers.BrowserProvider) => {
+    const { getReadOnlyContract, isConfiguredContractOwner } = await import('@/lib/contract');
+    let matchesOnChain = false;
     try {
-      const { getReadOnlyContract } = await import('@/lib/contract');
-      const contract = getReadOnlyContract();
+      const prov =
+        walletProvider
+        ?? (typeof window !== 'undefined' && window.ethereum
+          ? new ethers.BrowserProvider(window.ethereum)
+          : null);
+      const contract = prov ? getReadOnlyContract(prov) : getReadOnlyContract();
       const owner: string = await contract.owner();
-      setIsOwner(owner.toLowerCase() === addr.toLowerCase());
+      matchesOnChain = owner.toLowerCase() === addr.toLowerCase();
     } catch {
-      setIsOwner(false);
+      matchesOnChain = false;
     }
+    setIsOwner(matchesOnChain || isConfiguredContractOwner(addr));
   }, []);
+
+  const switchToTargetChain = useCallback(async () => {
+    if (typeof window === 'undefined' || !window.ethereum) {
+      setError('MetaMask no detectado. Por favor instala la extension.');
+      return;
+    }
+    setError(null);
+    try {
+      await ensureTargetChain(window.ethereum);
+      const prov = new ethers.BrowserProvider(window.ethereum);
+      setProvider(prov);
+      setSigner(await prov.getSigner());
+      const network = await prov.getNetwork();
+      setChainId(Number(network.chainId));
+      if (account) await checkOwner(account, prov);
+    } catch (err) {
+      const e = err as { code?: number; message?: string };
+      if (e?.code === 4001 || e?.message?.includes('rejected') || e?.message?.includes('User denied')) {
+        setError('Cambio de red rechazado por el usuario.');
+      } else {
+        setError(e?.message || (err instanceof Error ? err.message : 'Error al cambiar de red'));
+      }
+    }
+  }, [account, checkOwner]);
 
   const connect = useCallback(async () => {
     setError(null);
@@ -53,16 +127,21 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       return;
     }
     try {
-      const prov = new ethers.BrowserProvider(window.ethereum);
+      const eth = window.ethereum;
+      const prov = new ethers.BrowserProvider(eth);
       const accounts: string[] = await prov.send('eth_requestAccounts', []);
       if (!accounts.length) throw new Error('No hay cuentas disponibles.');
-      const network = await prov.getNetwork();
-      const sig = await prov.getSigner();
-      setProvider(prov);
+
+      await ensureTargetChain(eth);
+
+      const provAfterChain = new ethers.BrowserProvider(eth);
+      const network = await provAfterChain.getNetwork();
+      const sig = await provAfterChain.getSigner();
+      setProvider(provAfterChain);
       setSigner(sig);
       setAccount(accounts[0]);
       setChainId(Number(network.chainId));
-      await checkOwner(accounts[0]);
+      await checkOwner(accounts[0], provAfterChain);
     } catch (err) {
       const e = err as { code?: number; message?: string };
       if (e?.code === 4001 || e?.message?.includes('rejected') || e?.message?.includes('User denied')) {
@@ -90,13 +169,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (!accounts || accounts.length === 0) disconnect();
       else {
         setAccount(accounts[0]);
-        checkOwner(accounts[0]);
         try {
           const prov = new ethers.BrowserProvider(eth);
+          await checkOwner(accounts[0], prov);
           const network = await prov.getNetwork();
           setChainId(Number(network.chainId));
         } catch {
-          // mantener chainId anterior si falla
+          await checkOwner(accounts[0]);
         }
       }
     };
@@ -112,7 +191,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   return (
     <WalletContext.Provider value={{
       account, chainId, isConnected: !!account,
-      isOwner, provider, signer, connect, disconnect, error,
+      isOwner, provider, signer, connect, disconnect, switchToTargetChain, error,
     }}>
       {children}
     </WalletContext.Provider>

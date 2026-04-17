@@ -20,50 +20,40 @@ interface NavbarProps {
 export function Navbar({ onMenuClick, variant = 'dark' }: NavbarProps) {
   const pathname = usePathname();
   const title = TITLES[pathname] ?? 'SecurityManager';
+  const landing = variant === 'light';
 
-  if (variant === 'light') {
-    return (
-      <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 md:px-8 shrink-0 z-30">
-        <div className="flex items-center gap-4">
+  return (
+    <header className="ds-navbar">
+      <div className="ds-navbar__left">
+        {!landing && (
           <button
             type="button"
             onClick={onMenuClick}
-            className="md:hidden p-2.5 -ml-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all"
+            className="ds-navbar__menu-btn"
             aria-label="Abrir menu"
             data-testid="btn-mobile-menu"
           >
-            <Bars3Icon className="w-6 h-6" />
+            <Bars3Icon style={{ width: 24, height: 24 }} />
           </button>
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-amber-500 flex items-center justify-center">
-              <ShieldCheckIcon className="w-5 h-5 text-white" />
+        )}
+        {landing ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="ds-sidebar__brand-icon" style={{ width: 40, height: 40 }}>
+              <ShieldCheckIcon style={{ width: 22, height: 22 }} />
             </div>
-            <span className="text-base font-semibold text-slate-900 tracking-tight">RBAC Blockchain</span>
+            <div className="ds-navbar__titles">
+              <h1>RBAC Blockchain</h1>
+              <p>Sistema RBAC en blockchain</p>
+            </div>
           </div>
-        </div>
-        <WalletButton variant="landing" />
-      </header>
-    );
-  }
-
-  return (
-    <header className="h-16 bg-[#0D0F12]/90 backdrop-blur-xl border-b border-[#232A34] flex items-center justify-between px-5 md:px-8 shrink-0 z-30 shadow-lg shadow-black/20">
-      <div className="flex items-center gap-4">
-        <button
-          type="button"
-          onClick={onMenuClick}
-          className="md:hidden p-2.5 -ml-2 rounded-xl text-[#9CA3AF] hover:text-[#FAFBFC] hover:bg-[#191D24] transition-all duration-300"
-          aria-label="Abrir menu"
-          data-testid="btn-mobile-menu"
-        >
-          <Bars3Icon className="w-6 h-6" />
-        </button>
-        <div>
-          <h1 className="text-[15px] font-semibold text-[#FAFBFC] leading-tight tracking-tight">{title}</h1>
-          <p className="text-[11px] text-[#6B7280] tracking-wide">Sistema RBAC Inmutable en Blockchain</p>
-        </div>
+        ) : (
+          <div className="ds-navbar__titles">
+            <h1>{title}</h1>
+            <p>Sistema RBAC Inmutable en Blockchain</p>
+          </div>
+        )}
       </div>
-      <WalletButton />
+      <WalletButton variant={landing ? 'landing' : 'default'} />
     </header>
   );
 }

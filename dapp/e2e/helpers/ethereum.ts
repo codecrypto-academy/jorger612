@@ -2,16 +2,17 @@
  * Mock de window.ethereum que redirige todas las llamadas JSON-RPC
  * al nodo Anvil local, simulando el comportamiento de MetaMask.
  *
- * - eth_requestAccounts / eth_accounts → cuenta #0 de Anvil (owner)
+ * - eth_requestAccounts / eth_accounts → cuenta owner esperada en e2e (debe coincidir con contract.owner())
  * - eth_chainId / net_version          → Chain 31337
  * - eth_sendTransaction                → Anvil firma con cuenta desbloqueada
  * - Todo lo demás                      → forward directo a Anvil
  */
 
-export const OWNER_ADDRESS  = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
-export const CONTRACT_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
-export const RPC_URL          = 'http://localhost:8545';
-export const CHAIN_ID_HEX     = '0x7a69'; // 31337
+export const OWNER_ADDRESS = process.env.CONTRACT_OWNER_ADDRESS || '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
+export const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '';
+export const RPC_URL = process.env.RPC_URL || 'http://localhost:8545';
+export const CHAIN_ID_HEX = process.env.CHAIN_ID_HEX || '0x7a69'; // 31337
+export const CHAIN_ID_DEC = process.env.CHAIN_ID || '31337';
 
 /**
  * Script que se inyecta en el browser ANTES de que cargue la página.
@@ -50,7 +51,7 @@ export const MOCK_ETHEREUM_SCRIPT = `
       if (method === 'eth_requestAccounts')        return [OWNER];
       if (method === 'eth_accounts')               return [OWNER];
       if (method === 'eth_chainId')                return CHAIN_ID;
-      if (method === 'net_version')                return '31337';
+      if (method === 'net_version')                return '${CHAIN_ID_DEC}';
       if (method === 'wallet_switchEthereumChain') return null;
       if (method === 'wallet_addEthereumChain')    return null;
 

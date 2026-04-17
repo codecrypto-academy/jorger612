@@ -11,16 +11,16 @@ interface ToastProps {
 
 const icons = {
   success: CheckCircleIcon,
-  error:   XCircleIcon,
-  info:    InformationCircleIcon,
+  error: XCircleIcon,
+  info: InformationCircleIcon,
   warning: ExclamationTriangleIcon,
 };
 
-const styles = {
-  success: 'border-emerald-500/50 bg-[#0D0F12] text-emerald-400',
-  error:   'border-red-500/50 bg-[#0D0F12] text-red-400',
-  info:    'border-[#4F7CFF]/50 bg-[#0D0F12] text-blue-400',
-  warning: 'border-[#C9A227]/50 bg-[#0D0F12] text-[#D4AF37]',
+const typeClass: Record<ToastType['type'], string> = {
+  success: 'ds-toast--success',
+  error: 'ds-toast--error',
+  info: 'ds-toast--info',
+  warning: 'ds-toast--warning',
 };
 
 function ToastItem({ toast, onRemove }: { toast: ToastType; onRemove: (id: string) => void }) {
@@ -31,15 +31,11 @@ function ToastItem({ toast, onRemove }: { toast: ToastType; onRemove: (id: strin
   }, [toast.id, onRemove]);
 
   return (
-    <div
-      data-testid="toast-item"
-      className={`flex items-start gap-3 px-4 py-3 rounded-xl border shadow-2xl shadow-black/40 animate-fadeIn ${styles[toast.type]}`}
-      role="alert"
-    >
-      <Icon className="w-5 h-5 shrink-0 mt-0.5" />
-      <p className="text-sm flex-1 font-medium">{toast.message}</p>
-      <button onClick={() => onRemove(toast.id)} className="shrink-0 opacity-70 hover:opacity-100 transition-opacity text-inherit">
-        <XMarkIcon className="w-4 h-4" />
+    <div data-testid="toast-item" className={`ds-toast ${typeClass[toast.type]}`} role="alert">
+      <Icon style={{ width: 22, height: 22, flexShrink: 0, marginTop: 2 }} />
+      <p className="ds-toast__msg">{toast.message}</p>
+      <button type="button" onClick={() => onRemove(toast.id)} className="ds-toast__close" aria-label="Cerrar">
+        <XMarkIcon style={{ width: 18, height: 18 }} />
       </button>
     </div>
   );
@@ -47,8 +43,10 @@ function ToastItem({ toast, onRemove }: { toast: ToastType; onRemove: (id: strin
 
 export function ToastContainer({ toasts, onRemove }: ToastProps) {
   return (
-    <div className="fixed bottom-8 right-8 z-[100] flex flex-col gap-3 w-80" aria-live="polite">
-      {toasts.map(t => <ToastItem key={t.id} toast={t} onRemove={onRemove} />)}
+    <div className="ds-toast-host" aria-live="polite">
+      {toasts.map((t) => (
+        <ToastItem key={t.id} toast={t} onRemove={onRemove} />
+      ))}
     </div>
   );
 }

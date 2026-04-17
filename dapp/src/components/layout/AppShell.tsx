@@ -10,15 +10,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const { isConnected } = useWallet();
+  const isDesignDemo = pathname?.startsWith('/demo/diseno') ?? false;
   const isLanding = pathname === '/' && !isConnected;
+
+  if (isDesignDemo) {
+    return <>{children}</>;
+  }
 
   if (isLanding) {
     return (
-      <div className="min-h-screen flex flex-col bg-gradient-to-b from-sky-50 to-white">
+      <div className="ds-landing">
         <Navbar variant="light" onMenuClick={() => {}} />
-        <main className="flex-1 flex items-center justify-center p-6">
-          {children}
-        </main>
+        <main className="ds-landing__main">{children}</main>
       </div>
     );
   }
@@ -26,17 +29,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isDashboard = pathname === '/';
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar
-        isMobileOpen={mobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
-        onNavigate={() => setMobileMenuOpen(false)}
-      />
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <Navbar onMenuClick={() => setMobileMenuOpen(true)} variant={isDashboard ? 'light' : 'dark'} />
-        <main className={`flex-1 overflow-y-auto p-8 ${isDashboard ? 'bg-[#eef2f7]' : 'bg-[#050608]'}`}>
-          {children}
-        </main>
+    <div className="ds-app-shell">
+      <div className="ds-app-shell__row">
+        <Sidebar
+          isMobileOpen={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+          onNavigate={() => setMobileMenuOpen(false)}
+        />
+        <div className="ds-main-col">
+          <Navbar onMenuClick={() => setMobileMenuOpen(true)} variant={isDashboard ? 'light' : 'light'} />
+          <main className="ds-main-scroll">
+            <div className="ds-page-inner">{children}</div>
+          </main>
+        </div>
       </div>
     </div>
   );

@@ -28,10 +28,22 @@ export function RolModal({ isOpen, onClose, onSubmit, rol, mode }: RolModalProps
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = nombre.trim();
-    if (!trimmed) { setError('El nombre del rol es obligatorio.'); return; }
-    if (trimmed.length < 2) { setError('El nombre debe tener al menos 2 caracteres.'); return; }
-    if (trimmed.length > 64) { setError('El nombre no puede superar 64 caracteres.'); return; }
-    if (!/^[a-zA-Z0-9\s_-]+$/.test(trimmed)) { setError('Solo se permiten letras, numeros, espacios, guiones y guiones bajos.'); return; }
+    if (!trimmed) {
+      setError('El nombre del rol es obligatorio.');
+      return;
+    }
+    if (trimmed.length < 2) {
+      setError('El nombre debe tener al menos 2 caracteres.');
+      return;
+    }
+    if (trimmed.length > 64) {
+      setError('El nombre no puede superar 64 caracteres.');
+      return;
+    }
+    if (!/^[a-zA-Z0-9\s_-]+$/.test(trimmed)) {
+      setError('Solo se permiten letras, numeros, espacios, guiones y guiones bajos.');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
@@ -47,44 +59,63 @@ export function RolModal({ isOpen, onClose, onSubmit, rol, mode }: RolModalProps
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={mode === 'crear' ? 'Crear Nuevo Rol' : 'Modificar Rol'}>
       <form onSubmit={handleSubmit} data-testid="rol-form" noValidate>
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="rol-nombre" className="block text-sm font-medium text-slate-300 mb-1.5">
-              Nombre del Rol <span className="text-red-400">*</span>
-            </label>
-            <input
-              id="rol-nombre"
-              data-testid="input-rol-nombre"
-              type="text"
-              value={nombre}
-              onChange={e => setNombre(e.target.value)}
-              placeholder="Ej: Administrador, Auditor..."
-              maxLength={64}
-              className="w-full px-4 py-3 bg-[#191D24] border border-[#232A34] rounded-xl text-[#FAFBFC] placeholder-[#6B7280] text-sm focus:outline-none focus:border-[#C9A227] focus:ring-2 focus:ring-[#C9A227]/20 transition-all duration-300"
-              aria-required="true"
-              aria-describedby={error ? 'rol-error' : undefined}
-            />
-            <div className="flex justify-between mt-1">
-              {error
-                ? <p id="rol-error" data-testid="rol-form-error" className="text-xs text-red-400">{error}</p>
-                : <span />
-              }
-              <p className="text-xs text-slate-500">{nombre.length}/64</p>
-            </div>
+        <div className="ds-field">
+          <label htmlFor="rol-nombre" className="ds-label">
+            Nombre del Rol <span style={{ color: 'var(--ds-danger)' }}>*</span>
+          </label>
+          <input
+            id="rol-nombre"
+            data-testid="input-rol-nombre"
+            type="text"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            placeholder="Ej: Administrador, Auditor..."
+            maxLength={64}
+            className="ds-input"
+            style={{ maxWidth: '100%' }}
+            aria-required="true"
+            aria-describedby={error ? 'rol-error' : undefined}
+          />
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, alignItems: 'flex-start', gap: 8 }}>
+            {error ? (
+              <p id="rol-error" data-testid="rol-form-error" style={{ fontSize: 12, color: 'var(--ds-danger)', margin: 0 }}>
+                {error}
+              </p>
+            ) : (
+              <span />
+            )}
+            <p style={{ fontSize: 12, color: 'var(--ds-gray-600)', margin: 0 }}>{nombre.length}/64</p>
           </div>
-
-          {mode === 'modificar' && rol && (
-            <div className="px-4 py-3 bg-[#191D24] rounded-xl border border-[#232A34]">
-              <p className="text-xs text-slate-400">ID del Rol: <span className="text-slate-200 font-mono">#{rol.id}</span></p>
-            </div>
-          )}
         </div>
 
-        <div className="flex gap-3 mt-6">
-          <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
-          <Button type="submit" loading={loading} className="flex-1" data-testid="btn-submit-rol">
-            {loading ? 'Procesando...' : mode === 'crear' ? 'Crear Rol' : 'Guardar Cambios'}
-          </Button>
+        {mode === 'modificar' && rol && (
+          <div
+            style={{
+              padding: '12px 16px',
+              borderRadius: 10,
+              background: 'var(--ds-bg-soft)',
+              border: '1px solid var(--ds-border)',
+              marginBottom: 8,
+            }}
+          >
+            <p style={{ fontSize: 12, color: 'var(--ds-gray-600)', margin: 0 }}>
+              ID del Rol:{' '}
+              <span style={{ fontFamily: 'var(--ds-font-mono)', color: 'var(--ds-text-title)', fontWeight: 600 }}>#{rol.id}</span>
+            </p>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
+          <div style={{ flex: 1 }}>
+            <Button type="button" variant="secondary" onClick={onClose} style={{ width: '100%' }}>
+              Cancelar
+            </Button>
+          </div>
+          <div style={{ flex: 1 }}>
+            <Button type="submit" loading={loading} data-testid="btn-submit-rol" style={{ width: '100%' }}>
+              {loading ? 'Procesando...' : mode === 'crear' ? 'Crear Rol' : 'Guardar Cambios'}
+            </Button>
+          </div>
         </div>
       </form>
     </Modal>

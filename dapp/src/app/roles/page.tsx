@@ -32,7 +32,9 @@ export default function RolesPage() {
   const [historialRol, setHistorialRol] = useState<Rol | null>(null);
   const [historialItems, setHistorialItems] = useState<HistorialItem[]>([]);
 
-  useEffect(() => { if (isConnected) fetchRoles(); }, [isConnected, fetchRoles]);
+  useEffect(() => {
+    if (isConnected) fetchRoles();
+  }, [isConnected, fetchRoles]);
 
   useEffect(() => {
     if (historialRol) {
@@ -42,104 +44,132 @@ export default function RolesPage() {
     }
   }, [historialRol, fetchHistorialRol]);
 
-  const handleCrear = () => { setModalMode('crear'); setSelectedRol(null); setModalOpen(true); };
-  const handleModificar = (rol: Rol) => { setModalMode('modificar'); setSelectedRol(rol); setModalOpen(true); };
+  const handleCrear = () => {
+    setModalMode('crear');
+    setSelectedRol(null);
+    setModalOpen(true);
+  };
+  const handleModificar = (rol: Rol) => {
+    setModalMode('modificar');
+    setSelectedRol(rol);
+    setModalOpen(true);
+  };
 
-  const handleSubmit = useCallback(async (nombre: string) => {
-    if (!signer) throw new Error('Wallet no conectada.');
-    try {
-      if (modalMode === 'crear') {
-        await crearRol(signer, nombre);
-        addToast('success', `Rol "${nombre}" creado correctamente.`);
-      } else if (selectedRol) {
-        await modificarRol(signer, selectedRol.id, nombre);
-        addToast('success', `Rol "${nombre}" modificado correctamente.`);
+  const handleSubmit = useCallback(
+    async (nombre: string) => {
+      if (!signer) throw new Error('Wallet no conectada.');
+      try {
+        if (modalMode === 'crear') {
+          await crearRol(signer, nombre);
+          addToast('success', `Rol "${nombre}" creado correctamente.`);
+        } else if (selectedRol) {
+          await modificarRol(signer, selectedRol.id, nombre);
+          addToast('success', `Rol "${nombre}" modificado correctamente.`);
+        }
+      } catch (err) {
+        const msg = parseContractError(err);
+        addToast('error', msg);
+        throw err;
       }
-    } catch (err) {
-      const msg = parseContractError(err);
-      addToast('error', msg);
-      throw err;
-    }
-  }, [signer, modalMode, selectedRol, crearRol, modificarRol, addToast]);
+    },
+    [signer, modalMode, selectedRol, crearRol, modificarRol, addToast],
+  );
 
-  const handleInhabilitar = useCallback(async (id: number) => {
-    if (!signer) return;
-    setInhibLoading(true);
-    try {
-      await inhabilitarRol(signer, id);
-      addToast('success', `Rol #${id} inhabilitado correctamente.`);
-    } catch (err) {
-      addToast('error', parseContractError(err));
-    } finally {
-      setInhibLoading(false);
-      setConfirmId(null);
-    }
-  }, [signer, inhabilitarRol, addToast]);
+  const handleInhabilitar = useCallback(
+    async (id: number) => {
+      if (!signer) return;
+      setInhibLoading(true);
+      try {
+        await inhabilitarRol(signer, id);
+        addToast('success', `Rol #${id} inhabilitado correctamente.`);
+      } catch (err) {
+        addToast('error', parseContractError(err));
+      } finally {
+        setInhibLoading(false);
+        setConfirmId(null);
+      }
+    },
+    [signer, inhabilitarRol, addToast],
+  );
 
   const cuentaNoRegistrada = isConnected && !authLoading && !isAuthorized;
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 animate-fadeIn">
-      {!isConnected && (
-        <div className="px-5 py-4 rounded-2xl bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#D4AF37] text-sm font-medium">
-          Conecta tu wallet para visualizar y gestionar roles.
-        </div>
-      )}
+    <div style={{ maxWidth: 1152, margin: '0 auto' }}>
+      {!isConnected && <div className="ds-callout" style={{ marginBottom: 20 }}>Conecta tu wallet para visualizar y gestionar roles.</div>}
 
-      {cuentaNoRegistrada && <AlertaCuentaNoAutorizada />}
+      {cuentaNoRegistrada && <AlertaCuentaNoAutorizada style={{ marginBottom: 20 }} />}
 
       {isConnected && (authLoading || isAuthorized) && (
         <>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-[#C9A227]/15 border border-[#C9A227]/40 text-[#D4AF37]">
-            <ShieldCheckIcon className="w-5 h-5" />
+          <div className="ds-page-header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 12,
+                  background: 'rgba(255,255,255,0.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  border: '1px solid rgba(255,255,255,0.35)',
+                }}
+              >
+                <ShieldCheckIcon style={{ width: 24, height: 24 }} />
+              </div>
+              <div className="ds-page-header__titles">
+                <h2>Gestion de Roles</h2>
+                <p>
+                  {roles.length} registros · {roles.filter((r) => r.activo).length} activos
+                </p>
+              </div>
+            </div>
+            <div className="ds-toolbar">
+              <Button variant="secondary" size="sm" onClick={() => void fetchRoles()} disabled={loading}>
+                <ArrowPathIcon style={{ width: 16, height: 16, animation: loading ? 'dsSpin 0.8s linear infinite' : undefined }} />
+                Actualizar
+              </Button>
+              {canManage && (
+                <Button size="sm" onClick={handleCrear} data-testid="btn-crear-rol">
+                  <PlusCircleIcon style={{ width: 16, height: 16 }} />
+                  Crear Rol
+                </Button>
+              )}
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg font-bold text-[#FAFBFC] tracking-tight">Gestion de Roles</h2>
-            <p className="text-xs text-[#6B7280]">{roles.length} registros · {roles.filter(r => r.activo).length} activos</p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={fetchRoles} disabled={loading}>
-            <ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Actualizar
-          </Button>
-          {canManage && (
-            <Button size="sm" onClick={handleCrear} data-testid="btn-crear-rol">
-              <PlusCircleIcon className="w-4 h-4" />
-              Crear Rol
-            </Button>
+
+          {confirmId !== null && (
+            <div className="ds-confirm-row" style={{ marginBottom: 20 }}>
+              <p style={{ margin: 0, flex: 1, fontWeight: 600, fontSize: 14 }}>¿Confirmas inhabilitar el Rol #{confirmId}?</p>
+              <Button variant="danger" size="sm" loading={inhibLoading} onClick={() => handleInhabilitar(confirmId)} data-testid="btn-confirm-inhabilitar">
+                Inhabilitar
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setConfirmId(null)}>
+                Cancelar
+              </Button>
+            </div>
           )}
-        </div>
-      </div>
 
-      {confirmId !== null && (
-        <div className="px-5 py-5 rounded-2xl bg-[#4C1D1D]/30 border border-red-500/40 flex flex-wrap items-center gap-4 animate-fadeIn">
-          <p className="text-sm text-red-200 flex-1 font-medium">¿Confirmas inhabilitar el Rol #{confirmId}?</p>
-          <Button variant="danger" size="sm" loading={inhibLoading} onClick={() => handleInhabilitar(confirmId)} data-testid="btn-confirm-inhabilitar">Inhabilitar</Button>
-          <Button variant="ghost" size="sm" onClick={() => setConfirmId(null)}>Cancelar</Button>
-        </div>
-      )}
+          <RolTable
+            roles={roles}
+            loading={loading}
+            isOwner={canManage}
+            onModificar={handleModificar}
+            onInhabilitar={(rol) => setConfirmId(rol.id)}
+            onHistorial={(rol) => setHistorialRol(rol)}
+          />
 
-      <RolTable
-        roles={roles}
-        loading={loading}
-        isOwner={canManage}
-        onModificar={handleModificar}
-        onInhabilitar={(rol) => setConfirmId(rol.id)}
-        onHistorial={(rol) => setHistorialRol(rol)}
-      />
-
-      <RolModal isOpen={modalOpen} onClose={() => setModalOpen(false)} onSubmit={handleSubmit} rol={selectedRol} mode={modalMode} />
-      <HistorialModal
-        isOpen={historialRol !== null}
-        onClose={() => setHistorialRol(null)}
-        titulo="Histórico de movimientos"
-        subtitulo={historialRol ? `${historialRol.nombre} #${historialRol.id}` : ''}
-        items={historialItems}
-        loading={historialLoading}
-      />
+          <RolModal isOpen={modalOpen} onClose={() => setModalOpen(false)} onSubmit={handleSubmit} rol={selectedRol} mode={modalMode} />
+          <HistorialModal
+            isOpen={historialRol !== null}
+            onClose={() => setHistorialRol(null)}
+            titulo="Histórico de movimientos"
+            subtitulo={historialRol ? `${historialRol.nombre} #${historialRol.id}` : ''}
+            items={historialItems}
+            loading={historialLoading}
+          />
         </>
       )}
       <ToastContainer toasts={toasts} onRemove={removeToast} />

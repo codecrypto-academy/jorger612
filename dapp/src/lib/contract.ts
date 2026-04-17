@@ -5,6 +5,14 @@ export const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '';
 export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'http://localhost:8545';
 export const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 31337);
 
+/** Dirección del desplegador / owner esperada (misma red que MetaMask). Si coincide con la wallet, se habilita UI de owner aunque falle la lectura vía RPC público. */
+const CONTRACT_OWNER_FROM_ENV = process.env.NEXT_PUBLIC_CONTRACT_OWNER_ADDRESS?.trim().toLowerCase() ?? '';
+
+export function isConfiguredContractOwner(address: string | null | undefined): boolean {
+  if (!address || !CONTRACT_OWNER_FROM_ENV) return false;
+  return address.toLowerCase() === CONTRACT_OWNER_FROM_ENV;
+}
+
 export function getReadOnlyContract(provider?: ethers.Provider) {
   const prov = provider ?? new ethers.JsonRpcProvider(RPC_URL);
   return new ethers.Contract(CONTRACT_ADDRESS, SECURITY_MANAGER_ABI, prov);
