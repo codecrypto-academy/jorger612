@@ -30,9 +30,22 @@ function parseEnvFile(filePath: string): Record<string, string> {
 }
 
 const sharedEnv = parseEnvFile(resolve(__dirname, '../.env'));
+const apiLocalEnv = parseEnvFile(resolve(__dirname, '../api/.env'));
+const apiDevPort = apiLocalEnv.PORT || '3005';
+
+const apiRewriteTarget =
+  process.env.API_REWRITE_TARGET ?? `http://127.0.0.1:${apiDevPort}`;
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${apiRewriteTarget}/:path*`,
+      },
+    ];
+  },
   env: {
     NEXT_PUBLIC_API_URL:
       process.env.NEXT_PUBLIC_API_URL
@@ -46,7 +59,7 @@ const nextConfig: NextConfig = {
       process.env.NEXT_PUBLIC_CHAIN_ID
       ?? process.env.CHAIN_ID
       ?? sharedEnv.CHAIN_ID
-      ?? '31337',
+      ?? '1337',
     NEXT_PUBLIC_CONTRACT_ADDRESS:
       process.env.NEXT_PUBLIC_CONTRACT_ADDRESS
       ?? process.env.CONTRACT_ADDRESS
@@ -57,6 +70,11 @@ const nextConfig: NextConfig = {
       ?? process.env.CONTRACT_OWNER_ADDRESS
       ?? sharedEnv.CONTRACT_OWNER_ADDRESS
       ?? '',
+    NEXT_PUBLIC_CONTRACT_DEPLOY_BLOCK:
+      process.env.NEXT_PUBLIC_CONTRACT_DEPLOY_BLOCK
+      ?? process.env.CONTRACT_DEPLOY_BLOCK
+      ?? sharedEnv.CONTRACT_DEPLOY_BLOCK
+      ?? '0',
   },
 };
 

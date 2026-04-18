@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { Menu } from '@/types';
 import { getReadOnlyContract, getSignedContract, parseContractError } from '@/lib/contract';
 import { useWallet } from '@/context/WalletContext';
+import { queryFilterSafe } from '@/lib/queryFilterSafe';
 
 export function useMenus() {
   const { account } = useWallet();
@@ -18,7 +19,7 @@ export function useMenus() {
     try {
       const contract = getReadOnlyContract();
       const filter = contract.filters.MenuCreado();
-      const events = await contract.queryFilter(filter, 0, 'latest');
+      const events = await queryFilterSafe(contract, filter);
       const ids = [...new Set(events.map((e) => Number(((e as ethers.EventLog).args[0]))))];
       const data = await Promise.all(ids.map(async (id) => {
         const m = await contract.menus(id);
@@ -34,6 +35,13 @@ export function useMenus() {
       setError(parseContractError(err));
     } finally {
       setLoading(false);
+    }
+  }, [account]);
+
+  useEffect(() => {
+    if (!account) {
+      setMenus([]);
+      setError(null);
     }
   }, [account]);
 

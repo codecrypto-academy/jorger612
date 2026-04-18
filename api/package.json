@@ -5,12 +5,13 @@
   "description": "API de consumo RBAC - Árbol de permisos por address y login",
   "main": "src/app.js",
   "scripts": {
-    "start": "node src/app.js",
-    "dev": "node --watch src/app.js"
+    "start": "node --env-file=.env src/app.js",
+    "dev": "node --watch --env-file=.env src/app.js"
   },
   "dependencies": {
-    "fastify": "^4.28.1",
     "@fastify/cors": "^9.0.1",
-    "ethers": "^6.13.1"
+    "ethers": "^6.13.1",
+    "fastify": "^4.28.1",
+    "mongodb": "^6.21.0"
   }
 }

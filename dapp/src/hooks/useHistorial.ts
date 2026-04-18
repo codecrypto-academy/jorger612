@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { ethers } from 'ethers';
 import { getReadOnlyContract } from '@/lib/contract';
+import { queryFilterSafe } from '@/lib/queryFilterSafe';
 
 export interface HistorialItem {
   accion: string;
@@ -110,9 +111,9 @@ export function useHistorial(provider?: ethers.Provider) {
       try {
         const contract = getContract();
         const [creados, modificados, inhabilitados] = await Promise.all([
-          contract.queryFilter(contract.filters.RolCreado(rolId), 0, 'latest'),
-          contract.queryFilter(contract.filters.RolModificado(rolId), 0, 'latest'),
-          contract.queryFilter(contract.filters.RolInhabilitado(rolId), 0, 'latest'),
+          queryFilterSafe(contract, contract.filters.RolCreado(rolId)),
+          queryFilterSafe(contract, contract.filters.RolModificado(rolId)),
+          queryFilterSafe(contract, contract.filters.RolInhabilitado(rolId)),
         ]);
         const items: HistorialItem[] = [...creados, ...modificados, ...inhabilitados]
           .filter((e): e is ethers.EventLog => 'args' in e && 'eventName' in e)
@@ -139,9 +140,9 @@ export function useHistorial(provider?: ethers.Provider) {
       try {
         const contract = getContract();
         const [creados, modificados, inhabilitados] = await Promise.all([
-          contract.queryFilter(contract.filters.UsuarioCreado(usuarioId), 0, 'latest'),
-          contract.queryFilter(contract.filters.UsuarioModificado(usuarioId), 0, 'latest'),
-          contract.queryFilter(contract.filters.UsuarioInhabilitado(usuarioId), 0, 'latest'),
+          queryFilterSafe(contract, contract.filters.UsuarioCreado(usuarioId)),
+          queryFilterSafe(contract, contract.filters.UsuarioModificado(usuarioId)),
+          queryFilterSafe(contract, contract.filters.UsuarioInhabilitado(usuarioId)),
         ]);
         const items: HistorialItem[] = [...creados, ...modificados, ...inhabilitados]
           .filter((e): e is ethers.EventLog => 'args' in e && 'eventName' in e)
@@ -168,11 +169,11 @@ export function useHistorial(provider?: ethers.Provider) {
       try {
         const contract = getContract();
         const [creados, modificados, inhabilitados, vinculados, desvinculados] = await Promise.all([
-          contract.queryFilter(contract.filters.MenuCreado(menuId), 0, 'latest'),
-          contract.queryFilter(contract.filters.MenuModificado(menuId), 0, 'latest'),
-          contract.queryFilter(contract.filters.MenuInhabilitado(menuId), 0, 'latest'),
-          contract.queryFilter(contract.filters.MenuVinculadoARol(null, menuId), 0, 'latest'),
-          contract.queryFilter(contract.filters.MenuDesvinculadoDeRol(null, menuId), 0, 'latest'),
+          queryFilterSafe(contract, contract.filters.MenuCreado(menuId)),
+          queryFilterSafe(contract, contract.filters.MenuModificado(menuId)),
+          queryFilterSafe(contract, contract.filters.MenuInhabilitado(menuId)),
+          queryFilterSafe(contract, contract.filters.MenuVinculadoARol(null, menuId)),
+          queryFilterSafe(contract, contract.filters.MenuDesvinculadoDeRol(null, menuId)),
         ]);
         const all = [...creados, ...modificados, ...inhabilitados, ...vinculados, ...desvinculados];
         const items: HistorialItem[] = all

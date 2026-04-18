@@ -79,32 +79,34 @@ export function MenuRolModal({ isOpen, onClose, menu, roles, onVincular, onDesvi
             ) : rolesActivos.length === 0 ? (
               <p className="text-sm text-slate-400 text-center py-4">No hay roles activos disponibles.</p>
             ) : (
-              rolesActivos.map(rol => (
+              rolesActivos.map(rol => {
+                const vinculado = accesos[rol.id] ?? false;
+                return (
                 <div key={rol.id} className={`flex items-center justify-between px-5 py-4 rounded-xl border transition-all duration-300 ${
-                  accesos[rol.id] ? 'bg-emerald-500/15 border-emerald-500/40' : 'bg-[#191D24] border-[#232A34]'
+                  vinculado ? 'bg-emerald-500/15 border-emerald-500/40' : 'bg-[#191D24] border-[#232A34]'
                 }`}>
                   <div className="flex items-center gap-3">
-                    <Badge activo={accesos[rol.id] ?? false} activeLabel="Vinculado" inactiveLabel="No vinculado" />
+                    <Badge activo={vinculado} activeLabel="Vinculado" inactiveLabel="No vinculado" />
                     <div>
-                      <p className="text-sm font-medium text-[#F8FAFC]">{rol.nombre}</p>
-                      <p className="text-xs font-mono text-slate-500">#{rol.id}</p>
+                      <p className={`text-sm font-medium ${vinculado ? 'text-neutral-900' : 'text-[#F8FAFC]'}`}>{rol.nombre}</p>
+                      <p className={`text-xs font-mono ${vinculado ? 'text-slate-600' : 'text-slate-500'}`}>#{rol.id}</p>
                     </div>
                   </div>
                   <Button
-                    variant={accesos[rol.id] ? 'danger' : 'primary'}
+                    variant={vinculado ? 'danger' : 'primary'}
                     size="sm"
                     loading={loadingRolId === rol.id}
                     onClick={() => toggle(rol)}
                     data-testid={`btn-toggle-rol-${rol.id}`}
-                    aria-label={accesos[rol.id] ? `Desvincular rol ${rol.nombre}` : `Vincular rol ${rol.nombre}`}
+                    aria-label={vinculado ? `Desvincular rol ${rol.nombre}` : `Vincular rol ${rol.nombre}`}
                   >
-                    {accesos[rol.id]
+                    {vinculado
                       ? <><MinusCircleIcon className="w-3.5 h-3.5" /> Desvincular</>
                       : <><PlusCircleIcon className="w-3.5 h-3.5" /> Vincular</>
                     }
                   </Button>
                 </div>
-              ))
+              ); })
             )}
           </div>
 

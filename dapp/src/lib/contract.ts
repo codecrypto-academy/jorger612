@@ -3,7 +3,16 @@ import { SECURITY_MANAGER_ABI } from './abi';
 
 export const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '';
 export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'http://localhost:8545';
-export const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 31337);
+export const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 1337);
+
+/** Bloque de despliegue del contrato; las consultas de eventos empiezan aquí (no en 0). */
+function parseDeployBlock(): number {
+  const raw = process.env.NEXT_PUBLIC_CONTRACT_DEPLOY_BLOCK;
+  if (raw === undefined || raw === '') return 0;
+  const n = parseInt(String(raw), 10);
+  return Number.isFinite(n) && n >= 0 ? n : 0;
+}
+export const CONTRACT_DEPLOY_BLOCK = parseDeployBlock();
 
 /** Dirección del desplegador / owner esperada (misma red que MetaMask). Si coincide con la wallet, se habilita UI de owner aunque falle la lectura vía RPC público. */
 const CONTRACT_OWNER_FROM_ENV = process.env.NEXT_PUBLIC_CONTRACT_OWNER_ADDRESS?.trim().toLowerCase() ?? '';

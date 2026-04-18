@@ -21,8 +21,8 @@ const MENU_CARDS = [
   { href: '/roles', label: 'Rol', description: 'Gestionar permisos y accesos.', Icon: ShieldCheckIcon },
   { href: '/usuarios', label: 'Usuario', description: 'Administrar perfiles de usuario.', Icon: UserCircleIcon },
   { href: '/menus', label: 'Menú', description: 'Configurar opciones de navegación.', Icon: Bars3Icon, showCount: true },
-  { href: '/cuentas', label: 'Gestionar Cuentas', description: 'Administrar cuentas autorizadas.', Icon: UserGroupIcon },
-];
+  { href: '/cuentas', label: 'Gestionar Cuentas', description: 'Administrar cuentas autorizadas.', Icon: UserGroupIcon, ownerOnly: true },
+] as const;
 
 function WelcomeCard() {
   const { connect } = useWallet();
@@ -53,6 +53,19 @@ function WelcomeCard() {
           <WalletIcon style={{ width: 20, height: 20 }} /> Conectar con MetaMask
         </button>
         <p style={{ fontSize: 12, color: 'var(--ds-gray-600)', marginTop: 20, marginBottom: 0 }}>Necesitas la extensión MetaMask instalada</p>
+        <Link
+          href="/market"
+          style={{
+            display: 'inline-block',
+            marginTop: 14,
+            fontSize: 14,
+            fontWeight: 600,
+            color: 'var(--ds-accent-start)',
+            textDecoration: 'none',
+          }}
+        >
+          Mi Primera Vez
+        </Link>
       </div>
     </div>
   );
@@ -92,7 +105,7 @@ export default function DashboardPage() {
       {!authLoading && !isOwner && !isAuthorized && <AlertaCuentaNoAutorizada style={{ marginBottom: 20 }} />}
 
       <div className="ds-grid" style={{ marginBottom: 24 }}>
-        {MENU_CARDS.map(({ href, label, description, Icon, showCount }) => (
+        {MENU_CARDS.filter((c) => !('ownerOnly' in c && c.ownerOnly) || isOwner).map(({ href, label, description, Icon, showCount }) => (
           <Link
             key={href}
             href={href}

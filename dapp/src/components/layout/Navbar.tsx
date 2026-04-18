@@ -9,6 +9,7 @@ const TITLES: Record<string, string> = {
   '/roles': 'Gestion de Roles',
   '/usuarios': 'Gestion de Usuarios',
   '/menus': 'Gestion de Menus',
+  '/peticiones': 'Ver Peticiones',
   '/cuentas': 'Gestionar Cuentas',
 };
 
@@ -21,6 +22,7 @@ export function Navbar({ onMenuClick, variant = 'dark' }: NavbarProps) {
   const pathname = usePathname();
   const title = TITLES[pathname] ?? 'SecurityManager';
   const landing = variant === 'light';
+  const isMarket = pathname === '/market';
 
   return (
     <header className="ds-navbar">
@@ -42,8 +44,8 @@ export function Navbar({ onMenuClick, variant = 'dark' }: NavbarProps) {
               <ShieldCheckIcon style={{ width: 22, height: 22 }} />
             </div>
             <div className="ds-navbar__titles">
-              <h1>RBAC Blockchain</h1>
-              <p>Sistema RBAC en blockchain</p>
+              <h1>{isMarket ? 'Market' : 'RBAC Blockchain'}</h1>
+              <p>{isMarket ? 'Solicitud de acceso' : 'Sistema RBAC en blockchain'}</p>
             </div>
           </div>
         ) : (

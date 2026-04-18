@@ -1,10 +1,25 @@
 services:
 
+  mongo:
+    image: mongo:7
+    ports:
+      - "27019:27017"
+    volumes:
+      - mongo_market_data:/data/db
+    networks:
+      - internal
+    restart: unless-stopped
+
   api:
     build:
       context: ./api
       dockerfile: Dockerfile
     env_file: ./api/.env
+    environment:
+      PORT: "3005"
+      MONGODB_URI: mongodb://mongo:27017/rbac_market
+    depends_on:
+      - mongo
     networks:
       - internal
     restart: unless-stopped
@@ -33,3 +48,6 @@ services:
 networks:
   internal:
     driver: bridge
+
+volumes:
+  mongo_market_data:

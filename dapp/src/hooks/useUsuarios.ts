@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { Usuario } from '@/types';
 import { getReadOnlyContract, getSignedContract, parseContractError } from '@/lib/contract';
 import { useWallet } from '@/context/WalletContext';
+import { queryFilterSafe } from '@/lib/queryFilterSafe';
 
 export function useUsuarios() {
   const { account } = useWallet();
@@ -18,7 +19,7 @@ export function useUsuarios() {
     try {
       const contract = getReadOnlyContract();
       const filter = contract.filters.UsuarioCreado();
-      const events = await contract.queryFilter(filter, 0, 'latest');
+      const events = await queryFilterSafe(contract, filter);
       const ids = [...new Set(events.map((e) => Number(((e as ethers.EventLog).args[0]))))];
       const data = await Promise.all(ids.map(async (id) => {
         const u = await contract.usuarios(id);
@@ -34,6 +35,13 @@ export function useUsuarios() {
       setError(parseContractError(err));
     } finally {
       setLoading(false);
+    }
+  }, [account]);
+
+  useEffect(() => {
+    if (!account) {
+      setUsuarios([]);
+      setError(null);
     }
   }, [account]);
 

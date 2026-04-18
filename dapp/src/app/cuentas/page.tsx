@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { useWallet } from '@/context/WalletContext';
 import { useCuentas } from '@/hooks/useCuentas';
 import { useToast } from '@/hooks/useToast';
@@ -24,8 +25,8 @@ export default function CuentasPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
-    if (isConnected) fetchCuentas();
-  }, [isConnected, fetchCuentas]);
+    if (isConnected && isOwner) void fetchCuentas();
+  }, [isConnected, isOwner, fetchCuentas]);
 
   const handleCrear = () => {
     setModalMode('crear');
@@ -72,6 +73,29 @@ export default function CuentasPage() {
     }
   }, [signer, confirmCuenta, eliminarCuenta, addToast]);
 
+  if (!isConnected) {
+    return (
+      <div style={{ maxWidth: 1152, margin: '0 auto' }}>
+        <div className="ds-callout">Conecta tu wallet para acceder a esta sección.</div>
+      </div>
+    );
+  }
+
+  if (!isOwner) {
+    return (
+      <div style={{ maxWidth: 1152, margin: '0 auto' }}>
+        <div className="ds-alert ds-alert--info" style={{ marginBottom: 20 }}>
+          <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--ds-text-title)' }}>
+            Solo el propietario del contrato (owner) puede acceder a la gestión de cuentas autorizadas. Esta información no está disponible para otras direcciones.
+          </p>
+        </div>
+        <Link href="/" className="ds-btn ds-btn--secondary" style={{ textDecoration: 'none', display: 'inline-flex' }}>
+          Volver al panel
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div style={{ maxWidth: 1152, margin: '0 auto' }}>
       <div className="ds-page-header">
@@ -101,24 +125,12 @@ export default function CuentasPage() {
             <ArrowPathIcon style={{ width: 16, height: 16, animation: loading ? 'dsSpin 0.8s linear infinite' : undefined }} />
             Actualizar
           </Button>
-          {isConnected && isOwner && (
-            <Button size="sm" onClick={handleCrear} data-testid="btn-crear-cuenta">
-              <PlusCircleIcon style={{ width: 16, height: 16 }} />
-              Crear Cuenta
-            </Button>
-          )}
+          <Button size="sm" onClick={handleCrear} data-testid="btn-crear-cuenta">
+            <PlusCircleIcon style={{ width: 16, height: 16 }} />
+            Crear Cuenta
+          </Button>
         </div>
       </div>
-
-      {!isConnected && <div className="ds-callout" style={{ marginBottom: 20 }}>Conecta tu wallet para visualizar las cuentas autorizadas.</div>}
-
-      {isConnected && !isOwner && (
-        <div className="ds-alert ds-alert--info" style={{ marginBottom: 20 }}>
-          <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--ds-text-title)' }}>
-            Solo el propietario del contrato puede crear, modificar o eliminar cuentas autorizadas. Puedes visualizar la lista.
-          </p>
-        </div>
-      )}
 
       {confirmCuenta !== null && (
         <div className="ds-confirm-row" style={{ marginBottom: 20 }}>
@@ -137,7 +149,7 @@ export default function CuentasPage() {
       <CuentaTable
         cuentas={cuentas}
         loading={loading}
-        isOwner={Boolean(isOwner)}
+        isOwner
         onModificar={handleModificar}
         onEliminar={(c) => setConfirmCuenta(c)}
       />

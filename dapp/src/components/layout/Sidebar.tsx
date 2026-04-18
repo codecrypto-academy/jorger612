@@ -9,15 +9,18 @@ import {
   PlusCircleIcon,
   PaperAirplaneIcon,
   UserGroupIcon,
+  ClipboardDocumentListIcon,
 } from '@heroicons/react/24/outline';
+import { useWallet } from '@/context/WalletContext';
 
-const NAV = [
+const NAV_BASE = [
   { href: '/', label: 'Panel Principal', Icon: HomeIcon },
   { href: '/roles', label: 'Mis Roles', Icon: CubeIcon },
   { href: '/usuarios', label: 'Crear Usuario', Icon: PlusCircleIcon },
   { href: '/menus', label: 'Vinculos', Icon: PaperAirplaneIcon },
-  { href: '/cuentas', label: 'Gestionar Cuentas', Icon: UserGroupIcon },
-];
+  { href: '/peticiones', label: 'Ver Peticiones', Icon: ClipboardDocumentListIcon, ownerOnly: true },
+  { href: '/cuentas', label: 'Gestionar Cuentas', Icon: UserGroupIcon, ownerOnly: true },
+] as const;
 
 interface SidebarProps {
   isMobileOpen?: boolean;
@@ -28,13 +31,15 @@ interface SidebarProps {
 function NavLinks({
   pathname,
   onNavigate,
+  navItems,
 }: {
   pathname: string;
   onNavigate?: () => void;
+  navItems: typeof NAV_BASE;
 }) {
   return (
     <>
-      {NAV.map(({ href, label, Icon }) => {
+      {navItems.map(({ href, label, Icon }) => {
         const active = pathname === href;
         return (
           <Link
@@ -58,6 +63,8 @@ function NavLinks({
 
 export function Sidebar({ isMobileOpen = false, onClose, onNavigate }: SidebarProps) {
   const pathname = usePathname();
+  const { isOwner } = useWallet();
+  const navItems = NAV_BASE.filter((item) => !('ownerOnly' in item && item.ownerOnly) || isOwner);
 
   return (
     <>
@@ -69,7 +76,7 @@ export function Sidebar({ isMobileOpen = false, onClose, onNavigate }: SidebarPr
           <p className="ds-sidebar__brand-title">RBAC Blockchain</p>
         </div>
         <nav className="ds-sidebar__nav">
-          <NavLinks pathname={pathname} />
+          <NavLinks pathname={pathname} navItems={navItems} />
         </nav>
       </aside>
 
@@ -84,7 +91,7 @@ export function Sidebar({ isMobileOpen = false, onClose, onNavigate }: SidebarPr
               <p className="ds-sidebar__brand-title">RBAC Blockchain</p>
             </div>
             <nav className="ds-sidebar__nav">
-              <NavLinks pathname={pathname} onNavigate={onNavigate} />
+              <NavLinks pathname={pathname} onNavigate={onNavigate} navItems={navItems} />
             </nav>
           </aside>
         </div>

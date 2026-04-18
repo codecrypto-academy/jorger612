@@ -11,7 +11,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { isConnected } = useWallet();
   const isDesignDemo = pathname?.startsWith('/demo/diseno') ?? false;
-  const isLanding = pathname === '/' && !isConnected;
+  const isMarket = pathname === '/market';
+  const isLanding = (pathname === '/' && !isConnected) || isMarket;
 
   if (isDesignDemo) {
     return <>{children}</>;

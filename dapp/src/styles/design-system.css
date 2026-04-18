@@ -788,6 +788,8 @@ body {
 .ds-page-inner {
   max-width: var(--ds-container-max);
   margin: 0 auto;
+  min-width: 0;
+  width: 100%;
 }
 
 /* Landing (solo bienvenida) */
@@ -855,15 +857,43 @@ body {
 
 /* Tablas (listados claros sobre gradiente) */
 .ds-table-wrap {
-  overflow-x: auto;
+  /* scroll: barra horizontal siempre visible para llegar a columnas derechas (estado, acciones) */
+  overflow-x: scroll;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  width: 100%;
   border-radius: var(--ds-radius-card);
   border: 1px solid var(--ds-border);
   background: #fff;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  scrollbar-width: auto;
+  scrollbar-color: var(--ds-accent-start) var(--ds-bg-soft);
+}
+
+.ds-table-wrap::-webkit-scrollbar {
+  height: 14px;
+}
+
+.ds-table-wrap::-webkit-scrollbar-track {
+  background: var(--ds-bg-soft);
+  border-radius: 0 0 var(--ds-radius-card) var(--ds-radius-card);
+  margin: 0 2px;
+}
+
+.ds-table-wrap::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, var(--ds-accent-start), var(--ds-accent-end));
+  border-radius: 7px;
+  border: 2px solid var(--ds-bg-soft);
+}
+
+.ds-table-wrap::-webkit-scrollbar-thumb:hover {
+  filter: brightness(1.08);
 }
 
 .ds-table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: 14px;
 }

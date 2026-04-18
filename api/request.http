@@ -1,15 +1,75 @@
-### RBAC Permissions API - Árbol de permisos
-### Asegúrate de tener la API corriendo (npm start) y Anvil con el contrato desplegado
+### RBAC API — pruebas HTTP (VS Code / JetBrains REST Client)
+### Asegúrate de tener la API en marcha (npm run dev / npm start).
+### Permisos: Anvil u otro RPC con el contrato desplegado.
+### Market: requiere MongoDB (MONGODB_URI en .env, p. ej. puerto 27019 en host).
 
-@baseUrl = http://localhost:3005
+@baseUrl = http://localhost:3007
 @address = 0x5FbDB2315678afecb367f032d93F642f64180aa3
 @login = admin
 
-### Obtener árbol de permisos (usuario, rol, menús)
+###############################################################################
+### Permisos — árbol de permisos (usuario, rol, menús)
+###############################################################################
+
+### Obtener árbol de permisos
 POST {{baseUrl}}/permissions/tree
 Content-Type: application/json
 
 {
   "address": "{{address}}",
   "login": "{{login}}"
+}
+
+###############################################################################
+### Market — registro de leads (colección market_leads en MongoDB)
+### Respuesta 201: { "ok": true, "id": "<ObjectId>" }
+### Errores 400: { "error": "bad_request", "message": "..." }
+###############################################################################
+
+@wallet = 0x5FbDB2315678afecb367f032d93F642f64180aa3
+@email = ejemplo@correo.com
+
+### Crear lead (wallet y email obligatorios; el resto opcional)
+POST {{baseUrl}}/market/leads
+Content-Type: application/json
+
+{
+  "walletAddress": "{{wallet}}",
+  "nombreApellido": "Nombre Apellido",
+  "email": "{{email}}",
+  "telefono": "+34 600 000 000",
+  "descripcionAplicacion": "Breve descripción de la app que integrará RBAC."
+}
+
+### Crear lead mínimo (solo campos obligatorios)
+POST {{baseUrl}}/market/leads
+Content-Type: application/json
+
+{
+  "walletAddress": "{{wallet}}",
+  "email": "{{email}}"
+}
+
+### Listar peticiones (solo owner del contrato; header obligatorio)
+@ownerWallet = 0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73
+GET {{baseUrl}}/market/leads
+X-Owner-Address: {{ownerWallet}}
+
+### Actualizar estado: Enviado o Anulado (solo owner; sustituir LEAD_ID)
+@leadId = 000000000000000000000000
+PATCH {{baseUrl}}/market/leads/{{leadId}}
+Content-Type: application/json
+
+{
+  "ownerAddress": "{{ownerWallet}}",
+  "status": "Enviado"
+}
+
+### Anular petición
+PATCH {{baseUrl}}/market/leads/{{leadId}}
+Content-Type: application/json
+
+{
+  "ownerAddress": "{{ownerWallet}}",
+  "status": "Anulado"
 }

@@ -38,6 +38,10 @@ const RPC_URL = envOrShared('RPC_URL', 'http://localhost:8545');
 const CONTRACT_ADDRESS = envOrShared('CONTRACT_ADDRESS', '');
 export const CHAIN_ID = Number(envOrShared('CHAIN_ID', '31337'));
 
+const deployRaw = envOrShared('CONTRACT_DEPLOY_BLOCK', '0');
+const deployParsed = parseInt(deployRaw, 10);
+export const CONTRACT_DEPLOY_BLOCK = Number.isFinite(deployParsed) && deployParsed >= 0 ? deployParsed : 0;
+
 const abiPath = join(__dirname, '../abis/SecurityManager.json');
 const abi = JSON.parse(readFileSync(abiPath, 'utf-8'));
 

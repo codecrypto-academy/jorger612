@@ -1,11 +1,14 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { CuentaAutorizada } from '@/types';
 import { getReadOnlyContract, getSignedContract, parseContractError } from '@/lib/contract';
+import { queryFilterSafe } from '@/lib/queryFilterSafe';
+import { useWallet } from '@/context/WalletContext';
 
 export function useCuentas() {
+  const { account } = useWallet();
   const [cuentas, setCuentas] = useState<CuentaAutorizada[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +19,7 @@ export function useCuentas() {
     try {
       const contract = getReadOnlyContract();
       const filter = contract.filters.CuentaCreada();
-      const events = await contract.queryFilter(filter, 0, 'latest');
+      const events = await queryFilterSafe(contract, filter);
       const addresses = [...new Set(events.map((e) => (e as ethers.EventLog).args[0]))];
       const data: CuentaAutorizada[] = [];
       for (const addr of addresses) {
@@ -37,6 +40,13 @@ export function useCuentas() {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (!account) {
+      setCuentas([]);
+      setError(null);
+    }
+  }, [account]);
 
   const crearCuenta = useCallback(async (signer: ethers.Signer, wallet: string, nombre: string) => {
     const contract = getSignedContract(signer);

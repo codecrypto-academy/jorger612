@@ -1,4 +1,5 @@
 import { getContract, ZERO_ADDRESS } from '../config/blockchain.js';
+import { queryFilterSafe } from '../utils/queryFilterSafe.js';
 
 /**
  * Fase 1: Valida si la address está registrada y activa en CuentaAutorizada.
@@ -27,8 +28,8 @@ export async function findUsuarioByLogin(login) {
   const loginNorm = (login || '').trim().toLowerCase();
   if (!loginNorm) return null;
 
-  const creados = await contract.queryFilter(contract.filters.UsuarioCreado(), 0, 'latest');
-  const modificados = await contract.queryFilter(contract.filters.UsuarioModificado(), 0, 'latest');
+  const creados = await queryFilterSafe(contract, contract.filters.UsuarioCreado());
+  const modificados = await queryFilterSafe(contract, contract.filters.UsuarioModificado());
   const allIds = new Set([
     ...creados.map((e) => Number(e.args[0])),
     ...modificados.map((e) => Number(e.args[0])),

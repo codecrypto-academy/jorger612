@@ -1,18 +1,28 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  ReactNode,
+} from 'react';
 import { ethers } from 'ethers';
+import type { Eip1193Provider } from 'ethers';
 import { CHAIN_ID, RPC_URL } from '@/lib/contract';
+import { getEip1193Provider } from '@/lib/eip1193';
 
 function chainIdToHex(id: number): string {
   return `0x${BigInt(id).toString(16)}`;
 }
 
 /**
- * Pide a MetaMask cambiar a la red configurada (p. ej. Anvil 31337 = 0x7a69).
+ * Pide a MetaMask cambiar a la red configurada (p. ej. Besu 1337 = 0x539).
  * Si la red no está añadida, usa wallet_addEthereumChain con el RPC del .env.
  */
-async function ensureTargetChain(ethereum: NonNullable<typeof window.ethereum>) {
+async function ensureTargetChain(ethereum: Eip1193Provider) {
   const targetHex = chainIdToHex(CHAIN_ID);
   const currentHex = (await ethereum.request({ method: 'eth_chainId' })) as string;
   const currentId = Number(BigInt(currentHex));
@@ -31,7 +41,7 @@ async function ensureTargetChain(ethereum: NonNullable<typeof window.ethereum>) 
         params: [
           {
             chainId: targetHex,
-            chainName: 'Anvil local',
+            chainName: 'Besu VPS',
             nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
             rpcUrls: [RPC_URL],
           },
@@ -78,38 +88,61 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [isOwner, setIsOwner] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const ownerCheckSeq = useRef(0);
+  const accountRef = useRef<string | null>(null);
+  accountRef.current = account;
+
   const checkOwner = useCallback(async (addr: string, walletProvider?: ethers.BrowserProvider) => {
+    const seq = ++ownerCheckSeq.current;
     const { getReadOnlyContract, isConfiguredContractOwner } = await import('@/lib/contract');
     let matchesOnChain = false;
     try {
+      const injected = getEip1193Provider();
       const prov =
         walletProvider
-        ?? (typeof window !== 'undefined' && window.ethereum
-          ? new ethers.BrowserProvider(window.ethereum)
-          : null);
+        ?? (injected ? new ethers.BrowserProvider(injected) : null);
       const contract = prov ? getReadOnlyContract(prov) : getReadOnlyContract();
       const owner: string = await contract.owner();
       matchesOnChain = owner.toLowerCase() === addr.toLowerCase();
     } catch {
       matchesOnChain = false;
     }
+    if (seq !== ownerCheckSeq.current) return;
     setIsOwner(matchesOnChain || isConfiguredContractOwner(addr));
   }, []);
 
+  const bindWallet = useCallback(
+    async (eth: Eip1193Provider, accounts: string[]) => {
+      if (!accounts.length) return;
+      const selected = accounts[0];
+      await ensureTargetChain(eth);
+      const prov = new ethers.BrowserProvider(eth);
+      const network = await prov.getNetwork();
+      const sig = await prov.getSigner();
+      setProvider(prov);
+      setSigner(sig);
+      setAccount(selected);
+      setChainId(Number(network.chainId));
+      await checkOwner(selected, prov);
+    },
+    [checkOwner],
+  );
+
   const switchToTargetChain = useCallback(async () => {
-    if (typeof window === 'undefined' || !window.ethereum) {
+    const eth = getEip1193Provider();
+    if (!eth) {
       setError('MetaMask no detectado. Por favor instala la extension.');
       return;
     }
     setError(null);
     try {
-      await ensureTargetChain(window.ethereum);
-      const prov = new ethers.BrowserProvider(window.ethereum);
+      await ensureTargetChain(eth);
+      const prov = new ethers.BrowserProvider(eth);
       setProvider(prov);
       setSigner(await prov.getSigner());
       const network = await prov.getNetwork();
       setChainId(Number(network.chainId));
-      if (account) await checkOwner(account, prov);
+      if (accountRef.current) await checkOwner(accountRef.current, prov);
     } catch (err) {
       const e = err as { code?: number; message?: string };
       if (e?.code === 4001 || e?.message?.includes('rejected') || e?.message?.includes('User denied')) {
@@ -118,30 +151,20 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setError(e?.message || (err instanceof Error ? err.message : 'Error al cambiar de red'));
       }
     }
-  }, [account, checkOwner]);
+  }, [checkOwner]);
 
   const connect = useCallback(async () => {
     setError(null);
-    if (typeof window === 'undefined' || !window.ethereum) {
+    const eth = getEip1193Provider();
+    if (!eth) {
       setError('MetaMask no detectado. Por favor instala la extension.');
       return;
     }
     try {
-      const eth = window.ethereum;
       const prov = new ethers.BrowserProvider(eth);
       const accounts: string[] = await prov.send('eth_requestAccounts', []);
       if (!accounts.length) throw new Error('No hay cuentas disponibles.');
-
-      await ensureTargetChain(eth);
-
-      const provAfterChain = new ethers.BrowserProvider(eth);
-      const network = await provAfterChain.getNetwork();
-      const sig = await provAfterChain.getSigner();
-      setProvider(provAfterChain);
-      setSigner(sig);
-      setAccount(accounts[0]);
-      setChainId(Number(network.chainId));
-      await checkOwner(accounts[0], provAfterChain);
+      await bindWallet(eth, accounts);
     } catch (err) {
       const e = err as { code?: number; message?: string };
       if (e?.code === 4001 || e?.message?.includes('rejected') || e?.message?.includes('User denied')) {
@@ -150,9 +173,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setError(e?.message || (err instanceof Error ? err.message : 'Error al conectar wallet'));
       }
     }
-  }, [checkOwner]);
+  }, [bindWallet]);
 
   const disconnect = useCallback(() => {
+    ownerCheckSeq.current += 1;
     setAccount(null);
     setChainId(null);
     setProvider(null);
@@ -162,37 +186,84 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !window.ethereum) return;
-    const eth = window.ethereum;
-    const handleAccountsChanged = async (...args: unknown[]) => {
-      const accounts = args[0] as string[];
-      if (!accounts || accounts.length === 0) disconnect();
-      else {
-        setAccount(accounts[0]);
-        try {
-          const prov = new ethers.BrowserProvider(eth);
-          await checkOwner(accounts[0], prov);
-          const network = await prov.getNetwork();
-          setChainId(Number(network.chainId));
-        } catch {
-          await checkOwner(accounts[0]);
-        }
+    const eth = getEip1193Provider();
+    if (!eth) return;
+
+    /**
+     * Si cambia la cuenta activa en MetaMask, cerramos sesión en la dapp para no mezclar permisos ni datos.
+     * No desconectar cuando el evento repite la misma cuenta (p. ej. justo tras conectar).
+     */
+    const handleAccountsChanged = (...args: unknown[]) => {
+      const accounts = args[0] as string[] | undefined;
+      if (!accounts?.length) {
+        disconnect();
+        return;
+      }
+      const next = accounts[0];
+      const prev = accountRef.current;
+      if (prev && prev.toLowerCase() !== next.toLowerCase()) {
+        disconnect();
       }
     };
-    const handleChainChanged = () => window.location.reload();
+
+    const handleChainChanged = () => {
+      window.location.reload();
+    };
+
     eth.on('accountsChanged', handleAccountsChanged);
     eth.on('chainChanged', handleChainChanged);
+
+    /** Restaurar sesión si MetaMask ya tenía la pestaña autorizada (sin popup). */
+    void (async () => {
+      try {
+        const accounts = (await eth.request({ method: 'eth_accounts' })) as string[];
+        if (accounts?.length) await bindWallet(eth, accounts);
+      } catch {
+        /* ignorar */
+      }
+    })();
+
+    /** Respaldo: al volver a la pestaña, si la cuenta activa cambió sin evento, cerrar sesión. */
+    const onVisibility = () => {
+      if (document.visibilityState !== 'visible') return;
+      const prev = accountRef.current;
+      if (!prev) return;
+      void (async () => {
+        try {
+          const nextEth = getEip1193Provider();
+          if (!nextEth) return;
+          const accts = (await nextEth.request({ method: 'eth_accounts' })) as string[];
+          const next = accts[0];
+          if (next && prev.toLowerCase() !== next.toLowerCase()) disconnect();
+        } catch {
+          /* ignorar */
+        }
+      })();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
     return () => {
       eth.removeListener('accountsChanged', handleAccountsChanged);
       eth.removeListener('chainChanged', handleChainChanged);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [disconnect, checkOwner]);
+  }, [bindWallet, disconnect]);
 
   return (
-    <WalletContext.Provider value={{
-      account, chainId, isConnected: !!account,
-      isOwner, provider, signer, connect, disconnect, switchToTargetChain, error,
-    }}>
+    <WalletContext.Provider
+      value={{
+        account,
+        chainId,
+        isConnected: !!account,
+        isOwner,
+        provider,
+        signer,
+        connect,
+        disconnect,
+        switchToTargetChain,
+        error,
+      }}
+    >
       {children}
     </WalletContext.Provider>
   );
