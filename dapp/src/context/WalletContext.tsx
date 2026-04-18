@@ -11,6 +11,11 @@ import React, {
 } from 'react';
 import { ethers } from 'ethers';
 import type { Eip1193Provider } from 'ethers';
+
+type MetaMaskProvider = Eip1193Provider & {
+  on(event: string, handler: (...args: unknown[]) => void): void;
+  removeListener(event: string, handler: (...args: unknown[]) => void): void;
+};
 import { CHAIN_ID, RPC_URL } from '@/lib/contract';
 import { getEip1193Provider } from '@/lib/eip1193';
 
@@ -186,7 +191,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const eth = getEip1193Provider();
+    const eth = getEip1193Provider() as MetaMaskProvider | null;
     if (!eth) return;
 
     /**
