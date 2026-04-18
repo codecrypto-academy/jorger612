@@ -1,8 +1,8 @@
 # ── Stage 1: deps ─────────────────────────────────────────────────────────────
 FROM node:20-alpine AS deps
 WORKDIR /app
-COPY package.json ./
-RUN npm install --omit=dev
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
 
 # ── Stage 2: runner ────────────────────────────────────────────────────────────
 FROM node:20-alpine AS runner
@@ -12,8 +12,8 @@ ENV NODE_ENV=production
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY src ./src
-COPY package.json ./
+COPY package.json package-lock.json ./
 
-EXPOSE 3005
+EXPOSE 3007
 
 CMD ["node", "src/app.js"]

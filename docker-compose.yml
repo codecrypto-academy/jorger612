@@ -1,3 +1,12 @@
+# RBAC — stack para VPS (Besu puede correr aparte en el mismo host).
+# Puertos publicados: 3006 (dapp), 3007 (API), 27019 (MongoDB).
+#
+# Antes del primer arranque:
+#   1) Copie .env.example → .env en la RAÍZ (variables para el build de Next).
+#   2) Copie api/.env.example → api/.env y ajuste RPC, contrato y CONTRACT_OWNER_ADDRESS.
+#
+# Arranque: docker compose up -d --build
+
 services:
 
   mongo:
@@ -9,17 +18,26 @@ services:
     networks:
       - internal
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand({ ping: 1 }).ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
 
   api:
     build:
       context: ./api
       dockerfile: Dockerfile
     env_file: ./api/.env
+    ports:
+      - "3007:3007"
     environment:
-      PORT: "3005"
+      PORT: "3007"
       MONGODB_URI: mongodb://mongo:27017/rbac_market
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     networks:
       - internal
     restart: unless-stopped
@@ -28,19 +46,17 @@ services:
     build:
       context: ./dapp
       dockerfile: Dockerfile
-    networks:
-      - internal
-    restart: unless-stopped
-
-  nginx:
-    image: nginx:1.27-alpine
+      args:
+        API_REWRITE_TARGET: "http://api:3007"
+        RPC_URL: ${RPC_URL}
+        CHAIN_ID: ${CHAIN_ID}
+        CONTRACT_ADDRESS: ${CONTRACT_ADDRESS}
+        CONTRACT_OWNER_ADDRESS: ${CONTRACT_OWNER_ADDRESS:-}
+        CONTRACT_DEPLOY_BLOCK: ${CONTRACT_DEPLOY_BLOCK:-0}
     ports:
-      - "80:80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - "3006:3006"
     depends_on:
       - api
-      - dapp
     networks:
       - internal
     restart: unless-stopped
