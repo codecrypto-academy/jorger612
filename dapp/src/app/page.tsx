@@ -18,10 +18,10 @@ import {
 } from '@heroicons/react/24/outline';
 
 const MENU_CARDS = [
-  { href: '/roles', label: 'Rol', description: 'Gestionar permisos y accesos.', Icon: ShieldCheckIcon },
-  { href: '/usuarios', label: 'Usuario', description: 'Administrar perfiles de usuario.', Icon: UserCircleIcon },
+  { href: '/roles', label: 'Rol', description: 'Gestionar permisos y accesos.', Icon: ShieldCheckIcon, showCount: false },
+  { href: '/usuarios', label: 'Usuario', description: 'Administrar perfiles de usuario.', Icon: UserCircleIcon, showCount: false },
   { href: '/menus', label: 'Menú', description: 'Configurar opciones de navegación.', Icon: Bars3Icon, showCount: true },
-  { href: '/cuentas', label: 'Gestionar Cuentas', description: 'Administrar cuentas autorizadas.', Icon: UserGroupIcon, ownerOnly: true },
+  { href: '/cuentas', label: 'Gestionar Cuentas', description: 'Administrar cuentas autorizadas.', Icon: UserGroupIcon, ownerOnly: true, showCount: false },
 ] as const;
 
 function WelcomeCard() {
