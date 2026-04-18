@@ -35,7 +35,7 @@ function NavLinks({
 }: {
   pathname: string;
   onNavigate?: () => void;
-  navItems: typeof NAV_BASE;
+  navItems: ReadonlyArray<typeof NAV_BASE[number]>;
 }) {
   return (
     <>
