@@ -12,6 +12,7 @@ ENV NODE_ENV=production
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY src ./src
+COPY scripts ./scripts
 COPY package.json package-lock.json ./
 
 EXPOSE 3007

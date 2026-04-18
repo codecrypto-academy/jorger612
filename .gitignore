@@ -9,6 +9,7 @@ dapp/out
 
 #api
 api/node_modules
+api/respaldo.md
 
 # Ignores development broadcast logs
 !/broadcast

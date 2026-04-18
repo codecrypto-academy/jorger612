@@ -66,3 +66,29 @@ docker compose down
 ## 6. Datos persistentes
 
 El volumen `mongo_market_data` conserva la base entre reinicios. `docker compose down -v` borraría los datos de Mongo.
+
+## 7. Respaldo offline (`respaldo.md`)
+
+Genera un Markdown con datos on-chain (roles, usuarios, menús, vínculos, cuentas) y, si está configurado, los leads de Mongo (`market_leads`).
+
+**En la máquina donde tengas el repo y `api/.env`** (mismo RPC/contrato que el Besu):
+
+```bash
+cd api
+npm run respaldo
+```
+
+Queda **`api/respaldo.md`** (o la ruta que indiques).
+
+**Otra ruta de salida:**
+
+```bash
+node --env-file=.env scripts/respaldo.mjs /ruta/completa/respaldo.md
+```
+
+**Dentro del contenedor API** (variables ya inyectadas por Compose; el fichero sale en el contenedor — cópialo al host si hace falta):
+
+```bash
+docker compose exec api node scripts/respaldo.mjs /app/respaldo.md
+docker compose cp api:/app/respaldo.md ./respaldo.md
+```
