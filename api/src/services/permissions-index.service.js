@@ -5,6 +5,7 @@ const KEY_PREFIX = 'rbac:idx:v1';
 const META_LAST_BLOCK_KEY = `${KEY_PREFIX}:meta:lastProcessedBlock`;
 const DEFAULT_CONFIRMATIONS = Number(process.env.INDEXER_CONFIRMATIONS ?? 6);
 const DEFAULT_POLL_MS = Number(process.env.INDEXER_POLL_MS ?? 12000);
+const DEFAULT_BLOCK_CHUNK = Number(process.env.INDEXER_BLOCK_CHUNK ?? 2000);
 
 let running = false;
 let timer = null;
@@ -33,6 +34,15 @@ function keyMenu(menuId) {
 
 function keyMenusByRole(rolId) {
   return `${KEY_PREFIX}:rol:menus:${rolId}`;
+}
+
+function isRpcRangeLimitError(err) {
+  const message = err instanceof Error ? err.message : String(err);
+  return (
+    message.includes('maximum RPC range limit')
+    || message.includes('Requested range exceeds')
+    || message.includes('-32005')
+  );
 }
 
 async function upsertUser(contract, redis, userId) {
@@ -124,6 +134,30 @@ async function processLog(contract, redis, parsed) {
   }
 }
 
+async function fetchLogsChunked(provider, contractAddress, fromBlock, toBlock, initialChunk = DEFAULT_BLOCK_CHUNK) {
+  const logs = [];
+  let start = fromBlock;
+  let chunkSize = Math.max(1, initialChunk);
+
+  while (start <= toBlock) {
+    const end = Math.min(toBlock, start + chunkSize - 1);
+    try {
+      const batch = await provider.getLogs({
+        address: contractAddress,
+        fromBlock: start,
+        toBlock: end,
+      });
+      logs.push(...batch);
+      start = end + 1;
+    } catch (err) {
+      if (!isRpcRangeLimitError(err) || chunkSize === 1) throw err;
+      chunkSize = Math.max(1, Math.floor(chunkSize / 2));
+    }
+  }
+
+  return logs;
+}
+
 async function syncIndexOnce() {
   if (!isRedisEnabled()) return;
 
@@ -142,11 +176,7 @@ async function syncIndexOnce() {
   }
 
   const fromBlock = Math.max(CONTRACT_DEPLOY_BLOCK, lastProcessed + 1);
-  const logs = await provider.getLogs({
-    address: contract.target,
-    fromBlock,
-    toBlock: safeHead,
-  });
+  const logs = await fetchLogsChunked(provider, contract.target, fromBlock, safeHead);
 
   for (const log of logs) {
     let parsed = null;
