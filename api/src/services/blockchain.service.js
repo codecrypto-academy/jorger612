@@ -8,6 +8,11 @@ import { queryFilterSafe } from '../utils/queryFilterSafe.js';
  */
 export async function isCuentaRegistrada(address) {
   const contract = getContract();
+  // Compatibilidad: hay despliegues/ABIs sin registro de cuentas.
+  // Si el método no existe, no bloqueamos el flujo por esta validación.
+  if (typeof contract.cuentas !== 'function') {
+    return { valid: true };
+  }
   const cuenta = await contract.cuentas(address);
   const hasWallet = cuenta.wallet && cuenta.wallet !== ZERO_ADDRESS;
   const isActive = cuenta.activa === true;
