@@ -4,7 +4,7 @@ import { queryFilterSafe } from '../utils/queryFilterSafe.js';
 import { getRedis, isRedisEnabled } from './redis.service.js';
 
 const CACHE_PREFIX = 'rbac:read-cache:v2';
-const CACHE_TTL_SECONDS = Number(process.env.RBAC_READ_CACHE_TTL_SECONDS ?? 30);
+const CACHE_TTL_SECONDS = Number(process.env.RBAC_READ_CACHE_TTL_SECONDS ?? 120);
 
 function normalizeAddress(address) {
   if (!address) return '';
