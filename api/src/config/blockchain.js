@@ -44,14 +44,21 @@ export const CONTRACT_DEPLOY_BLOCK = Number.isFinite(deployParsed) && deployPars
 
 const abiPath = join(__dirname, '../abis/SecurityManager.json');
 const abi = JSON.parse(readFileSync(abiPath, 'utf-8'));
+let providerInstance = null;
+let contractInstance = null;
 
 export function getProvider() {
-  return new ethers.JsonRpcProvider(RPC_URL);
+  if (!providerInstance) {
+    providerInstance = new ethers.JsonRpcProvider(RPC_URL);
+  }
+  return providerInstance;
 }
 
 export function getContract() {
-  const provider = getProvider();
-  return new ethers.Contract(CONTRACT_ADDRESS, abi, provider);
+  if (!contractInstance) {
+    contractInstance = new ethers.Contract(CONTRACT_ADDRESS, abi, getProvider());
+  }
+  return contractInstance;
 }
 
 export const ZERO_ADDRESS = ethers.ZeroAddress;
