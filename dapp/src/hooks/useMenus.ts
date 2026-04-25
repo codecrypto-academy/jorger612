@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { ethers } from 'ethers';
 import { Menu } from '@/types';
 import { getReadOnlyContract, getSignedContract, parseContractError } from '@/lib/contract';
@@ -12,6 +12,7 @@ export function useMenus() {
   const [menus, setMenus] = useState<Menu[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const accessMapCacheRef = useRef<Map<number, Map<number, boolean>>>(new Map());
 
   const fetchMenus = useCallback(async () => {
     setLoading(true);
@@ -59,12 +60,14 @@ export function useMenus() {
     const contract = getSignedContract(signer);
     const tx = await contract.vincularMenuARol(rolId, menuId);
     await tx.wait();
+    accessMapCacheRef.current.delete(menuId);
   }, []);
 
   const desvincularMenuDeRol = useCallback(async (signer: ethers.Signer, rolId: number, menuId: number) => {
     const contract = getSignedContract(signer);
     const tx = await contract.desvincularMenuDeRol(rolId, menuId);
     await tx.wait();
+    accessMapCacheRef.current.delete(menuId);
   }, []);
 
   const obtenerMenusPorRol = useCallback(async (rolId: number): Promise<number[]> => {
@@ -82,9 +85,17 @@ export function useMenus() {
 
   const verificarAcceso = useCallback(async (rolId: number, menuId: number): Promise<boolean> => {
     try {
+      const menuCache = accessMapCacheRef.current.get(menuId);
+      if (menuCache && menuCache.has(rolId)) {
+        return Boolean(menuCache.get(rolId));
+      }
       const data = await apiGet(`/rbac/menu-access/${menuId}`);
-      const match = (data.items ?? []).find((row: { rolId: number; allowed: boolean }) => Number(row.rolId) === rolId);
-      return Boolean(match?.allowed);
+      const nextCache = new Map<number, boolean>();
+      for (const row of (data.items ?? []) as Array<{ rolId: number; allowed: boolean }>) {
+        nextCache.set(Number(row.rolId), Boolean(row.allowed));
+      }
+      accessMapCacheRef.current.set(menuId, nextCache);
+      return Boolean(nextCache.get(rolId));
     } catch {
       const contract = getReadOnlyContract();
       return contract.verificarAcceso(rolId, menuId);

@@ -1,10 +1,9 @@
 import { ethers } from 'ethers';
 import { getContract } from '../config/blockchain.js';
 import { queryFilterSafe } from '../utils/queryFilterSafe.js';
-import { getSafeBlock } from './permissions-cache.service.js';
 import { getRedis, isRedisEnabled } from './redis.service.js';
 
-const CACHE_PREFIX = 'rbac:read-cache:v1';
+const CACHE_PREFIX = 'rbac:read-cache:v2';
 const CACHE_TTL_SECONDS = Number(process.env.RBAC_READ_CACHE_TTL_SECONDS ?? 30);
 
 function normalizeAddress(address) {
@@ -16,13 +15,12 @@ function normalizeAddress(address) {
   }
 }
 
-function cacheKey(resource, safeBlock, params = '') {
-  return `${CACHE_PREFIX}:${resource}:b${safeBlock}:${params}`;
+function cacheKey(resource, params = '') {
+  return `${CACHE_PREFIX}:${resource}:${params}`;
 }
 
 async function withReadCache(resource, params, loader) {
-  const safeBlock = await getSafeBlock();
-  const key = cacheKey(resource, safeBlock, params);
+  const key = cacheKey(resource, params);
   if (isRedisEnabled()) {
     const redis = getRedis();
     const raw = await redis.get(key);
