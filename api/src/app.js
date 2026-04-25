@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { permissionsRoutes } from './routes/permissions.routes.js';
 import { marketRoutes } from './routes/market.routes.js';
+import { rbacReadRoutes } from './routes/rbac-read.routes.js';
 import { connectMongo } from './db/mongo.js';
 import { connectRedis, closeRedis, isRedisEnabled } from './services/redis.service.js';
 import {
@@ -26,6 +27,7 @@ try {
 
 app.register(permissionsRoutes, { prefix: '/' });
 app.register(marketRoutes);
+app.register(rbacReadRoutes, { prefix: '/rbac' });
 
 app.get('/', async () => ({ ok: true, service: 'rbac-permissions-api' }));
 app.get('/health', async () => {

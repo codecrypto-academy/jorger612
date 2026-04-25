@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import { Menu } from '@/types';
 import { getReadOnlyContract, getSignedContract, parseContractError } from '@/lib/contract';
 import { useWallet } from '@/context/WalletContext';
-import { queryFilterSafe } from '@/lib/queryFilterSafe';
+import { apiGet } from '@/lib/api';
 
 export function useMenus() {
   const { account } = useWallet();
@@ -17,20 +17,9 @@ export function useMenus() {
     setLoading(true);
     setError(null);
     try {
-      const contract = getReadOnlyContract();
-      const filter = contract.filters.MenuCreado();
-      const events = await queryFilterSafe(contract, filter);
-      const ids = [...new Set(events.map((e) => Number(((e as ethers.EventLog).args[0]))))];
-      const data = await Promise.all(ids.map(async (id) => {
-        const m = await contract.menus(id);
-        return { id: Number(m.id), nombre: m.nombre, activo: m.activo, timestamp: Number(m.timestamp), ejecutor: m.ejecutor } as Menu;
-      }));
-      let filtered = data.filter(m => m.id > 0);
-      if (account) {
-        const addr = account.toLowerCase();
-        filtered = filtered.filter(m => m.ejecutor?.toLowerCase() === addr);
-      }
-      setMenus(filtered);
+      const query = account ? `?account=${encodeURIComponent(account)}` : '';
+      const data = await apiGet(`/rbac/menus${query}`);
+      setMenus((data.items ?? []) as Menu[]);
     } catch (err) {
       setError(parseContractError(err));
     } finally {
@@ -79,14 +68,27 @@ export function useMenus() {
   }, []);
 
   const obtenerMenusPorRol = useCallback(async (rolId: number): Promise<number[]> => {
-    const contract = getReadOnlyContract();
-    const ids = await contract.obtenerMenusPorRol(rolId);
-    return ids.map(Number);
+    try {
+      const data = await apiGet(`/rbac/vinculos?rolId=${rolId}`);
+      const row = (data.items ?? [])[0];
+      if (!row) return [];
+      return (row.menuIds ?? []).map((id: number) => Number(id));
+    } catch {
+      const contract = getReadOnlyContract();
+      const ids = await contract.obtenerMenusPorRol(rolId);
+      return ids.map(Number);
+    }
   }, []);
 
   const verificarAcceso = useCallback(async (rolId: number, menuId: number): Promise<boolean> => {
-    const contract = getReadOnlyContract();
-    return contract.verificarAcceso(rolId, menuId);
+    try {
+      const data = await apiGet(`/rbac/menu-access/${menuId}`);
+      const match = (data.items ?? []).find((row: { rolId: number; allowed: boolean }) => Number(row.rolId) === rolId);
+      return Boolean(match?.allowed);
+    } catch {
+      const contract = getReadOnlyContract();
+      return contract.verificarAcceso(rolId, menuId);
+    }
   }, []);
 
   return { menus, loading, error, fetchMenus, crearMenu, modificarMenu, inhabilitarMenu, vincularMenuARol, desvincularMenuDeRol, obtenerMenusPorRol, verificarAcceso };

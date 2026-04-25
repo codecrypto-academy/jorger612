@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import { Usuario } from '@/types';
 import { getReadOnlyContract, getSignedContract, parseContractError } from '@/lib/contract';
 import { useWallet } from '@/context/WalletContext';
-import { queryFilterSafe } from '@/lib/queryFilterSafe';
+import { apiGet } from '@/lib/api';
 
 export function useUsuarios() {
   const { account } = useWallet();
@@ -17,20 +17,9 @@ export function useUsuarios() {
     setLoading(true);
     setError(null);
     try {
-      const contract = getReadOnlyContract();
-      const filter = contract.filters.UsuarioCreado();
-      const events = await queryFilterSafe(contract, filter);
-      const ids = [...new Set(events.map((e) => Number(((e as ethers.EventLog).args[0]))))];
-      const data = await Promise.all(ids.map(async (id) => {
-        const u = await contract.usuarios(id);
-        return { id: Number(u.id), login: u.login, nombre: u.nombre, rolId: Number(u.rolId), activo: u.activo, timestamp: Number(u.timestamp), ejecutor: u.ejecutor } as Usuario;
-      }));
-      let filtered = data.filter(u => u.id > 0);
-      if (account) {
-        const addr = account.toLowerCase();
-        filtered = filtered.filter(u => u.ejecutor?.toLowerCase() === addr);
-      }
-      setUsuarios(filtered);
+      const query = account ? `?account=${encodeURIComponent(account)}` : '';
+      const data = await apiGet(`/rbac/usuarios${query}`);
+      setUsuarios((data.items ?? []) as Usuario[]);
     } catch (err) {
       setError(parseContractError(err));
     } finally {

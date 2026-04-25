@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import { Rol } from '@/types';
 import { getReadOnlyContract, getSignedContract, parseContractError } from '@/lib/contract';
 import { useWallet } from '@/context/WalletContext';
-import { queryFilterSafe } from '@/lib/queryFilterSafe';
+import { apiGet } from '@/lib/api';
 
 export function useRoles() {
   const { account } = useWallet();
@@ -17,20 +17,9 @@ export function useRoles() {
     setLoading(true);
     setError(null);
     try {
-      const contract = getReadOnlyContract();
-      const filter = contract.filters.RolCreado();
-      const events = await queryFilterSafe(contract, filter);
-      const ids = [...new Set(events.map((e) => Number(((e as ethers.EventLog).args[0]))))];
-      const data = await Promise.all(ids.map(async (id) => {
-        const r = await contract.roles(id);
-        return { id: Number(r.id), nombre: r.nombre, activo: r.activo, timestamp: Number(r.timestamp), ejecutor: r.ejecutor } as Rol;
-      }));
-      let filtered = data.filter(r => r.id > 0);
-      if (account) {
-        const addr = account.toLowerCase();
-        filtered = filtered.filter(r => r.ejecutor?.toLowerCase() === addr);
-      }
-      setRoles(filtered);
+      const query = account ? `?account=${encodeURIComponent(account)}` : '';
+      const data = await apiGet(`/rbac/roles${query}`);
+      setRoles((data.items ?? []) as Rol[]);
     } catch (err) {
       setError(parseContractError(err));
     } finally {

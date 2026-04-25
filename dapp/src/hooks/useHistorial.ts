@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { ethers } from 'ethers';
 import { getReadOnlyContract } from '@/lib/contract';
 import { queryFilterSafe } from '@/lib/queryFilterSafe';
+import { apiGet } from '@/lib/api';
 
 export interface HistorialItem {
   accion: string;
@@ -109,6 +110,12 @@ export function useHistorial(provider?: ethers.Provider) {
       setLoading(true);
       setError(null);
       try {
+        const data = await apiGet(`/rbac/historial/rol/${rolId}`);
+        return (data.items ?? []) as HistorialItem[];
+      } catch {
+        // fallback local RPC if API is unavailable
+      }
+      try {
         const contract = getContract();
         const [creados, modificados, inhabilitados] = await Promise.all([
           queryFilterSafe(contract, contract.filters.RolCreado(rolId)),
@@ -138,6 +145,12 @@ export function useHistorial(provider?: ethers.Provider) {
       setLoading(true);
       setError(null);
       try {
+        const data = await apiGet(`/rbac/historial/usuario/${usuarioId}`);
+        return (data.items ?? []) as HistorialItem[];
+      } catch {
+        // fallback local RPC if API is unavailable
+      }
+      try {
         const contract = getContract();
         const [creados, modificados, inhabilitados] = await Promise.all([
           queryFilterSafe(contract, contract.filters.UsuarioCreado(usuarioId)),
@@ -166,6 +179,28 @@ export function useHistorial(provider?: ethers.Provider) {
     async (menuId: number, rolesMap?: Map<number, string>): Promise<HistorialItem[]> => {
       setLoading(true);
       setError(null);
+      try {
+        const data = await apiGet(`/rbac/historial/menu/${menuId}`);
+        const items = (data.items ?? []) as HistorialItem[];
+        return items.map((item) => {
+          if (!item.accion.startsWith('Vinculado a Rol #') && !item.accion.startsWith('Desvinculado de Rol #')) {
+            return item;
+          }
+          const match = item.accion.match(/Rol #(\d+)/);
+          if (!match) return item;
+          const rolId = Number(match[1]);
+          const rolNombre = rolesMap?.get(rolId);
+          if (!rolNombre) return item;
+          return {
+            ...item,
+            accion: item.accion.startsWith('Vinculado')
+              ? `Vinculado a ${rolNombre}`
+              : `Desvinculado de ${rolNombre}`,
+          };
+        });
+      } catch {
+        // fallback local RPC if API is unavailable
+      }
       try {
         const contract = getContract();
         const [creados, modificados, inhabilitados, vinculados, desvinculados] = await Promise.all([

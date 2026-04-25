@@ -4,8 +4,8 @@ import { useState, useCallback, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { CuentaAutorizada } from '@/types';
 import { getReadOnlyContract, getSignedContract, parseContractError } from '@/lib/contract';
-import { queryFilterSafe } from '@/lib/queryFilterSafe';
 import { useWallet } from '@/context/WalletContext';
+import { apiGet } from '@/lib/api';
 
 export function useCuentas() {
   const { account } = useWallet();
@@ -17,23 +17,8 @@ export function useCuentas() {
     setLoading(true);
     setError(null);
     try {
-      const contract = getReadOnlyContract();
-      const filter = contract.filters.CuentaCreada();
-      const events = await queryFilterSafe(contract, filter);
-      const addresses = [...new Set(events.map((e) => (e as ethers.EventLog).args[0]))];
-      const data: CuentaAutorizada[] = [];
-      for (const addr of addresses) {
-        const c = await contract.cuentas(addr);
-        if (c.wallet && c.wallet !== ethers.ZeroAddress) {
-          data.push({
-            wallet: c.wallet,
-            nombre: c.nombre,
-            fechaHora: Number(c.fechaHora),
-            activa: c.activa,
-          });
-        }
-      }
-      setCuentas(data);
+      const data = await apiGet('/rbac/cuentas');
+      setCuentas((data.items ?? []) as CuentaAutorizada[]);
     } catch (err) {
       setError(parseContractError(err));
     } finally {
