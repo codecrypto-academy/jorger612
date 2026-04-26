@@ -169,7 +169,7 @@ export default function UsuariosPage() {
         onClose={() => setArbolUsuario(null)}
         usuario={arbolUsuario}
         roles={roles}
-        obtenerMenusPorRol={obtenerMenusPorRol}
+        account={account}
       />
         </>
       )}

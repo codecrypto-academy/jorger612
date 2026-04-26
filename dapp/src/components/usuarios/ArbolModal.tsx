@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Usuario, Rol } from '@/types';
-import { getReadOnlyContract } from '@/lib/contract';
+import { API_URL } from '@/lib/api';
 import { UserCircleIcon, ShieldCheckIcon, Squares2X2Icon, ArrowLongRightIcon } from '@heroicons/react/24/outline';
 
 interface ArbolModalProps {
@@ -11,51 +11,49 @@ interface ArbolModalProps {
   onClose: () => void;
   usuario: Usuario | null;
   roles: Rol[];
-  obtenerMenusPorRol: (rolId: number) => Promise<number[]>;
+  account: string | null;
 }
 
 interface MenuInfo {
-  id: number;
-  nombre: string;
-  activo: boolean;
+  id: string;
+  label: string;
+  allowed: boolean;
 }
 
-export function ArbolModal({ isOpen, onClose, usuario, roles, obtenerMenusPorRol }: ArbolModalProps) {
+export function ArbolModal({ isOpen, onClose, usuario, roles, account }: ArbolModalProps) {
   const [menus, setMenus] = useState<MenuInfo[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!isOpen || !usuario) {
+    if (!isOpen || !usuario || !account) {
       setMenus([]);
       return;
     }
     let cancelled = false;
     setLoading(true);
-    const fetch = async () => {
+    const load = async () => {
       try {
-        const menuIds = await obtenerMenusPorRol(usuario.rolId);
-        const contract = getReadOnlyContract();
-        const data: MenuInfo[] = [];
-        for (const id of menuIds) {
-          const m = await contract.menus(id);
-          if (m.id) {
-            data.push({
-              id: Number(m.id),
-              nombre: m.nombre,
-              activo: m.activo,
-            });
-          }
+        const res = await fetch(`${API_URL}/permissions/tree`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ address: account, login: usuario.login }),
+          cache: 'no-store',
+        });
+        if (!res.ok) {
+          if (!cancelled) setMenus([]);
+          return;
         }
-        if (!cancelled) setMenus(data);
+        const data = await res.json();
+        if (!cancelled) setMenus(data?.menu ?? []);
       } catch {
         if (!cancelled) setMenus([]);
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
-    fetch();
+    load();
     return () => { cancelled = true; };
-  }, [isOpen, usuario, obtenerMenusPorRol]);
+  }, [isOpen, usuario, account]);
 
   const rolNombre = usuario ? roles.find((r) => r.id === usuario.rolId)?.nombre ?? `Rol #${usuario?.rolId}` : '';
 
@@ -235,10 +233,10 @@ export function ArbolModal({ isOpen, onClose, usuario, roles, obtenerMenusPorRol
                       }}
                     >
                       <div style={{ minWidth: 0 }}>
-                        <p style={{ margin: 0, fontSize: 14, color: '#111', fontWeight: 600 }}>{m.nombre}</p>
+                        <p style={{ margin: 0, fontSize: 14, color: '#111', fontWeight: 600 }}>{m.label}</p>
                         <p style={{ margin: '2px 0 0', fontSize: 11, color: '#6c757d', fontFamily: 'var(--ds-font-mono)' }}>Menu #{m.id}</p>
                       </div>
-                      {!m.activo && <span className="ds-badge ds-badge--error">Inactivo</span>}
+                      {!m.allowed && <span className="ds-badge ds-badge--error">No permitido</span>}
                     </div>
                   ))}
                 </div>
