@@ -5,6 +5,8 @@ libs    = ["lib"]
 test    = "test-eth"
 script  = "script"
 
+evm_version = "london"
+
 remappings = [
     "@openzeppelin/=lib/openzeppelin-contracts/"
 ]

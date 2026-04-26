@@ -11,8 +11,8 @@ if [ -f ".env" ]; then
   set +a
 fi
 
-RPC_URL="${RPC_URL:-http://localhost:8545}"
-CHAIN_ID="${CHAIN_ID:-31337}"
+RPC_URL="${RPC_URL:-http://72.167.46.115:8545}"
+CHAIN_ID="${CHAIN_ID:-1337}"
 PRIVATE_KEY="${PRIVATE_KEY:-0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63}"
 GAS_PRICE="${GAS_PRICE:-2000000000}"
 
@@ -24,8 +24,7 @@ echo "  GAS_PRICE: $GAS_PRICE"
 DEPLOY_OUTPUT="$(forge create src-eth/SecurityManager.sol:SecurityManager \
   --rpc-url "$RPC_URL" \
   --private-key "$PRIVATE_KEY" \
-  --evm-version paris \
-  --gas-limit 5000000 \
+  --gas-limit 8000000 \
   --gas-price "$GAS_PRICE" \
   --legacy \
   --broadcast)"
