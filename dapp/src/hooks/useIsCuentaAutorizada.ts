@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { ethers } from 'ethers';
-import { getReadOnlyContract } from '@/lib/contract';
+import { apiGet } from '@/lib/api';
 
 /**
  * Verifica si la cuenta conectada está registrada en CuentaAutorizada y activa.
- * Solo las cuentas autorizadas pueden gestionar roles, usuarios y menús.
+ * Usa la API (no RPC directo) para funcionar independientemente de si el puerto
+ * del nodo Besu es accesible desde el browser.
  */
 export function useIsCuentaAutorizada(account: string | null) {
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -19,11 +19,12 @@ export function useIsCuentaAutorizada(account: string | null) {
     }
     setLoading(true);
     try {
-      const contract = getReadOnlyContract();
-      const c = await contract.cuentas(account);
-      const authorized =
-        c.wallet && c.wallet !== ethers.ZeroAddress && c.activa === true;
-      setIsAuthorized(!!authorized);
+      const data = await apiGet('/rbac/cuentas');
+      const items: { wallet: string; activa: boolean }[] = data?.items ?? [];
+      const found = items.find(
+        (c) => c.wallet?.toLowerCase() === account.toLowerCase()
+      );
+      setIsAuthorized(!!found && found.activa === true);
     } catch {
       setIsAuthorized(false);
     } finally {
