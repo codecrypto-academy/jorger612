@@ -6,6 +6,42 @@
   },
   {
     "type": "function",
+    "name": "actualizarCuenta",
+    "inputs": [
+      {
+        "name": "_wallet",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "_nuevoNombre",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "crearCuenta",
+    "inputs": [
+      {
+        "name": "_wallet",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "_nombre",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "crearMenu",
     "inputs": [
       {
@@ -73,76 +109,35 @@
   },
   {
     "type": "function",
-    "name": "crearCuenta",
+    "name": "cuentas",
     "inputs": [
-      { "name": "_wallet", "type": "address", "internalType": "address" },
-      { "name": "_nombre", "type": "string", "internalType": "string" }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "obtenerCuenta",
-    "inputs": [
-      { "name": "_wallet", "type": "address", "internalType": "address" }
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
     ],
     "outputs": [
       {
-        "name": "",
-        "type": "tuple",
-        "internalType": "struct SecurityManager.CuentaAutorizada",
-        "components": [
-          { "name": "wallet", "type": "address", "internalType": "address" },
-          { "name": "nombre", "type": "string", "internalType": "string" },
-          { "name": "fechaHora", "type": "uint256", "internalType": "uint256" },
-          { "name": "activa", "type": "bool", "internalType": "bool" }
-        ]
+        "name": "wallet",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "activa",
+        "type": "bool",
+        "internalType": "bool"
+      },
+      {
+        "name": "fechaHora",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "nombre",
+        "type": "string",
+        "internalType": "string"
       }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "actualizarCuenta",
-    "inputs": [
-      { "name": "_wallet", "type": "address", "internalType": "address" },
-      { "name": "_nuevoNombre", "type": "string", "internalType": "string" }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "eliminarCuenta",
-    "inputs": [
-      { "name": "_wallet", "type": "address", "internalType": "address" }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "cuentas",
-    "inputs": [
-      { "name": "", "type": "address", "internalType": "address" }
-    ],
-    "outputs": [
-      { "name": "wallet", "type": "address", "internalType": "address" },
-      { "name": "nombre", "type": "string", "internalType": "string" },
-      { "name": "fechaHora", "type": "uint256", "internalType": "uint256" },
-      { "name": "activa", "type": "bool", "internalType": "bool" }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "listaDirecciones",
-    "inputs": [
-      { "name": "", "type": "uint256", "internalType": "uint256" }
-    ],
-    "outputs": [
-      { "name": "", "type": "address", "internalType": "address" }
     ],
     "stateMutability": "view"
   },
@@ -159,6 +154,19 @@
         "name": "menuId",
         "type": "uint32",
         "internalType": "uint32"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "eliminarCuenta",
+    "inputs": [
+      {
+        "name": "_wallet",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "outputs": [],
@@ -202,6 +210,25 @@
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "listaDirecciones",
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -254,24 +281,24 @@
         "internalType": "uint32"
       },
       {
-        "name": "nombre",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
         "name": "activo",
         "type": "bool",
         "internalType": "bool"
       },
       {
-        "name": "timestamp",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
         "name": "ejecutor",
         "type": "address",
         "internalType": "address"
+      },
+      {
+        "name": "timestamp",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "nombre",
+        "type": "string",
+        "internalType": "string"
       }
     ],
     "stateMutability": "view"
@@ -366,6 +393,101 @@
   },
   {
     "type": "function",
+    "name": "obtenerCuenta",
+    "inputs": [
+      {
+        "name": "_wallet",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "internalType": "struct SecurityManager.CuentaAutorizada",
+        "components": [
+          {
+            "name": "wallet",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "activa",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "fechaHora",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "nombre",
+            "type": "string",
+            "internalType": "string"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "obtenerCuentasActivas",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "result",
+        "type": "tuple[]",
+        "internalType": "struct SecurityManager.CuentaAutorizada[]",
+        "components": [
+          {
+            "name": "wallet",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "activa",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "fechaHora",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "nombre",
+            "type": "string",
+            "internalType": "string"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "obtenerMenusActivosPorRol",
+    "inputs": [
+      {
+        "name": "rolId",
+        "type": "uint32",
+        "internalType": "uint32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "activos",
+        "type": "uint32[]",
+        "internalType": "uint32[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "obtenerMenusPorRol",
     "inputs": [
       {
@@ -379,6 +501,136 @@
         "name": "",
         "type": "uint32[]",
         "internalType": "uint32[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "obtenerTodosMenus",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "result",
+        "type": "tuple[]",
+        "internalType": "struct SecurityManager.Menu[]",
+        "components": [
+          {
+            "name": "id",
+            "type": "uint32",
+            "internalType": "uint32"
+          },
+          {
+            "name": "activo",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "ejecutor",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "timestamp",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "nombre",
+            "type": "string",
+            "internalType": "string"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "obtenerTodosRoles",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "result",
+        "type": "tuple[]",
+        "internalType": "struct SecurityManager.Rol[]",
+        "components": [
+          {
+            "name": "id",
+            "type": "uint32",
+            "internalType": "uint32"
+          },
+          {
+            "name": "activo",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "ejecutor",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "timestamp",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "nombre",
+            "type": "string",
+            "internalType": "string"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "obtenerTodosUsuarios",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "result",
+        "type": "tuple[]",
+        "internalType": "struct SecurityManager.Usuario[]",
+        "components": [
+          {
+            "name": "id",
+            "type": "uint32",
+            "internalType": "uint32"
+          },
+          {
+            "name": "rolId",
+            "type": "uint32",
+            "internalType": "uint32"
+          },
+          {
+            "name": "activo",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "ejecutor",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "timestamp",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "login",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "nombre",
+            "type": "string",
+            "internalType": "string"
+          }
+        ]
       }
     ],
     "stateMutability": "view"
@@ -420,24 +672,24 @@
         "internalType": "uint32"
       },
       {
-        "name": "nombre",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
         "name": "activo",
         "type": "bool",
         "internalType": "bool"
       },
       {
-        "name": "timestamp",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
         "name": "ejecutor",
         "type": "address",
         "internalType": "address"
+      },
+      {
+        "name": "timestamp",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "nombre",
+        "type": "string",
+        "internalType": "string"
       }
     ],
     "stateMutability": "view"
@@ -472,16 +724,6 @@
         "internalType": "uint32"
       },
       {
-        "name": "login",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
-        "name": "nombre",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
         "name": "rolId",
         "type": "uint32",
         "internalType": "uint32"
@@ -492,14 +734,24 @@
         "internalType": "bool"
       },
       {
-        "name": "timestamp",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
         "name": "ejecutor",
         "type": "address",
         "internalType": "address"
+      },
+      {
+        "name": "timestamp",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "login",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "nombre",
+        "type": "string",
+        "internalType": "string"
       }
     ],
     "stateMutability": "view"
@@ -548,21 +800,51 @@
   },
   {
     "type": "event",
-    "name": "CuentaCreada",
+    "name": "CuentaActualizada",
     "inputs": [
-      { "name": "wallet", "type": "address", "indexed": true, "internalType": "address" },
-      { "name": "nombre", "type": "string", "indexed": false, "internalType": "string" },
-      { "name": "fechaHora", "type": "uint256", "indexed": false, "internalType": "uint256" }
+      {
+        "name": "wallet",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "nuevoNombre",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "fechaHora",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
     ],
     "anonymous": false
   },
   {
     "type": "event",
-    "name": "CuentaActualizada",
+    "name": "CuentaCreada",
     "inputs": [
-      { "name": "wallet", "type": "address", "indexed": true, "internalType": "address" },
-      { "name": "nuevoNombre", "type": "string", "indexed": false, "internalType": "string" },
-      { "name": "fechaHora", "type": "uint256", "indexed": false, "internalType": "uint256" }
+      {
+        "name": "wallet",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "nombre",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "fechaHora",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
     ],
     "anonymous": false
   },
@@ -570,8 +852,18 @@
     "type": "event",
     "name": "CuentaEliminada",
     "inputs": [
-      { "name": "wallet", "type": "address", "indexed": true, "internalType": "address" },
-      { "name": "fechaHora", "type": "uint256", "indexed": false, "internalType": "uint256" }
+      {
+        "name": "wallet",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "fechaHora",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
     ],
     "anonymous": false
   },
@@ -961,6 +1253,33 @@
   },
   {
     "type": "error",
+    "name": "CuentaNoExiste",
+    "inputs": [
+      {
+        "name": "wallet",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "CuentaYaExiste",
+    "inputs": [
+      {
+        "name": "wallet",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "DireccionInvalida",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "MenuNoExiste",
     "inputs": [
       {
@@ -999,6 +1318,17 @@
         "name": "menuId",
         "type": "uint32",
         "internalType": "uint32"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "NoAutorizado",
+    "inputs": [
+      {
+        "name": "caller",
+        "type": "address",
+        "internalType": "address"
       }
     ]
   },

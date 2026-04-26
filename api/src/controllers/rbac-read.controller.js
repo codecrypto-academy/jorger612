@@ -8,7 +8,13 @@ import {
   historialRol,
   historialUsuario,
   historialMenu,
+  invalidateReadCache,
 } from '../services/rbac-read.service.js';
+
+export async function postInvalidate(_request, reply) {
+  await invalidateReadCache();
+  return reply.send({ ok: true });
+}
 
 function parsePositiveInt(value) {
   const n = Number(value);

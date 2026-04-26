@@ -11,3 +11,15 @@ export async function apiGet(path: string) {
   }
   return res.json();
 }
+
+export async function apiPost(path: string) {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: 'POST',
+    cache: 'no-store',
+    headers: { Accept: 'application/json' },
+  });
+  if (!res.ok) {
+    throw new Error(`API ${res.status}: ${await res.text()}`);
+  }
+  return res.json();
+}

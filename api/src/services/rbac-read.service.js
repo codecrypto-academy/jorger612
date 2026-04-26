@@ -6,6 +6,13 @@ import { getRedis, isRedisEnabled } from './redis.service.js';
 const CACHE_PREFIX = 'rbac:read-cache:v2';
 const CACHE_TTL_SECONDS = Number(process.env.RBAC_READ_CACHE_TTL_SECONDS ?? 120);
 
+export async function invalidateReadCache() {
+  if (!isRedisEnabled()) return;
+  const redis = getRedis();
+  const keys = await redis.keys(`${CACHE_PREFIX}:*`);
+  if (keys.length) await redis.del(...keys);
+}
+
 function normalizeAddress(address) {
   if (!address) return '';
   try {

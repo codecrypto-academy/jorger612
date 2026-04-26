@@ -3,9 +3,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { Rol } from '@/types';
-import { getReadOnlyContract, getSignedContract, parseContractError } from '@/lib/contract';
+import { getSignedContract, parseContractError } from '@/lib/contract';
 import { useWallet } from '@/context/WalletContext';
-import { apiGet } from '@/lib/api';
+import { apiGet, apiPost } from '@/lib/api';
 
 export function useRoles() {
   const { account } = useWallet();
@@ -38,6 +38,7 @@ export function useRoles() {
     const contract = getSignedContract(signer);
     const tx = await contract.crearRol(nombre);
     await tx.wait();
+    await apiPost('/rbac/invalidate');
     await fetchRoles();
   }, [fetchRoles]);
 
@@ -45,6 +46,7 @@ export function useRoles() {
     const contract = getSignedContract(signer);
     const tx = await contract.modificarRol(id, nombre);
     await tx.wait();
+    await apiPost('/rbac/invalidate');
     await fetchRoles();
   }, [fetchRoles]);
 
@@ -52,6 +54,7 @@ export function useRoles() {
     const contract = getSignedContract(signer);
     const tx = await contract.inhabilitarRol(id);
     await tx.wait();
+    await apiPost('/rbac/invalidate');
     await fetchRoles();
   }, [fetchRoles]);
 

@@ -40,10 +40,11 @@ export function parseContractError(error: unknown): string {
     if (msg.includes('MenuNoExiste')) return 'El menu no existe.';
     if (msg.includes('MenuYaVinculado')) return 'El menu ya esta vinculado a este rol.';
     if (msg.includes('MenuNoVinculado')) return 'El menu no esta vinculado a este rol.';
+    if (msg.includes('NoAutorizado')) return 'No tienes permiso para realizar esta accion.';
+    if (msg.includes('CuentaYaExiste')) return 'La cuenta ya existe.';
+    if (msg.includes('CuentaNoExiste')) return 'La cuenta no existe.';
+    if (msg.includes('DireccionInvalida')) return 'Direccion invalida.';
     if (msg.includes('caller is not the owner')) return 'Solo el propietario del contrato puede realizar esta accion.';
-    if (msg.includes('La cuenta ya existe')) return 'La cuenta ya existe.';
-    if (msg.includes('La cuenta no existe')) return 'La cuenta no existe.';
-    if (msg.includes('Direccion invalida')) return 'Direccion invalida.';
     if (msg.includes('user rejected')) return 'Transaccion rechazada por el usuario.';
     return msg.length > 120 ? msg.substring(0, 120) + '...' : msg;
   }

@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import { Menu } from '@/types';
 import { getReadOnlyContract, getSignedContract, parseContractError } from '@/lib/contract';
 import { useWallet } from '@/context/WalletContext';
-import { apiGet } from '@/lib/api';
+import { apiGet, apiPost } from '@/lib/api';
 
 export function useMenus() {
   const { account } = useWallet();
@@ -39,6 +39,7 @@ export function useMenus() {
     const contract = getSignedContract(signer);
     const tx = await contract.crearMenu(nombre);
     await tx.wait();
+    await apiPost('/rbac/invalidate');
     await fetchMenus();
   }, [fetchMenus]);
 
@@ -46,6 +47,7 @@ export function useMenus() {
     const contract = getSignedContract(signer);
     const tx = await contract.modificarMenu(id, nombre);
     await tx.wait();
+    await apiPost('/rbac/invalidate');
     await fetchMenus();
   }, [fetchMenus]);
 
@@ -53,6 +55,7 @@ export function useMenus() {
     const contract = getSignedContract(signer);
     const tx = await contract.inhabilitarMenu(id);
     await tx.wait();
+    await apiPost('/rbac/invalidate');
     await fetchMenus();
   }, [fetchMenus]);
 
@@ -60,6 +63,7 @@ export function useMenus() {
     const contract = getSignedContract(signer);
     const tx = await contract.vincularMenuARol(rolId, menuId);
     await tx.wait();
+    await apiPost('/rbac/invalidate');
     accessMapCacheRef.current.delete(menuId);
   }, []);
 
@@ -67,6 +71,7 @@ export function useMenus() {
     const contract = getSignedContract(signer);
     const tx = await contract.desvincularMenuDeRol(rolId, menuId);
     await tx.wait();
+    await apiPost('/rbac/invalidate');
     accessMapCacheRef.current.delete(menuId);
   }, []);
 

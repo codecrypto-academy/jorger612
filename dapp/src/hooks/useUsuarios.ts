@@ -3,9 +3,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { Usuario } from '@/types';
-import { getReadOnlyContract, getSignedContract, parseContractError } from '@/lib/contract';
+import { getSignedContract, parseContractError } from '@/lib/contract';
 import { useWallet } from '@/context/WalletContext';
-import { apiGet } from '@/lib/api';
+import { apiGet, apiPost } from '@/lib/api';
 
 export function useUsuarios() {
   const { account } = useWallet();
@@ -38,6 +38,7 @@ export function useUsuarios() {
     const contract = getSignedContract(signer);
     const tx = await contract.crearUsuario(login, nombre, rolId);
     await tx.wait();
+    await apiPost('/rbac/invalidate');
     await fetchUsuarios();
   }, [fetchUsuarios]);
 
@@ -45,6 +46,7 @@ export function useUsuarios() {
     const contract = getSignedContract(signer);
     const tx = await contract.modificarUsuario(id, login, nombre, rolId);
     await tx.wait();
+    await apiPost('/rbac/invalidate');
     await fetchUsuarios();
   }, [fetchUsuarios]);
 
@@ -52,6 +54,7 @@ export function useUsuarios() {
     const contract = getSignedContract(signer);
     const tx = await contract.inhabilitarUsuario(id);
     await tx.wait();
+    await apiPost('/rbac/invalidate');
     await fetchUsuarios();
   }, [fetchUsuarios]);
 

@@ -58,7 +58,8 @@ contract SecurityManagerTest is Test {
 
     function test_CrearRol_AlmacenaEstadoCorrecto() public {
         uint32 id = sm.crearRol("Supervisor");
-        (uint32 rId, string memory rNombre, bool rActivo,, address rEjecutor) = sm.roles(id);
+        // Nuevo orden de campos: id, activo, ejecutor, timestamp, nombre
+        (uint32 rId, bool rActivo, address rEjecutor,, string memory rNombre) = sm.roles(id);
         assertEq(rId, id);
         assertEq(rNombre, "Supervisor");
         assertTrue(rActivo);
@@ -67,10 +68,10 @@ contract SecurityManagerTest is Test {
 
     function test_InhabilitarRol_CambiaEstadoActivo() public {
         uint32 id = sm.crearRol("Auditor");
-        (,, bool activoAntes,,) = sm.roles(id);
+        (, bool activoAntes,,,) = sm.roles(id);
         assertTrue(activoAntes);
         sm.inhabilitarRol(id);
-        (,, bool activoDespues,,) = sm.roles(id);
+        (, bool activoDespues,,,) = sm.roles(id);
         assertFalse(activoDespues);
     }
 
@@ -115,10 +116,11 @@ contract SecurityManagerTest is Test {
     function test_InhabilitarUsuario_CambiaEstadoActivo() public {
         uint32 rolId = sm.crearRol("Admin");
         uint32 usuarioId = sm.crearUsuario("jane", "Jane Doe", rolId);
-        (,,,, bool activoAntes,,) = sm.usuarios(usuarioId);
+        // Nuevo orden de campos: id, rolId, activo, ejecutor, timestamp, login, nombre
+        (,, bool activoAntes,,,,) = sm.usuarios(usuarioId);
         assertTrue(activoAntes);
         sm.inhabilitarUsuario(usuarioId);
-        (,,,, bool activoDespues,,) = sm.usuarios(usuarioId);
+        (,, bool activoDespues,,,,) = sm.usuarios(usuarioId);
         assertFalse(activoDespues);
     }
 
@@ -145,10 +147,11 @@ contract SecurityManagerTest is Test {
 
     function test_InhabilitarMenu_CambiaEstadoActivo() public {
         uint32 menuId = sm.crearMenu("Reportes");
-        (,, bool activoAntes,,) = sm.menus(menuId);
+        // Nuevo orden de campos: id, activo, ejecutor, timestamp, nombre
+        (, bool activoAntes,,,) = sm.menus(menuId);
         assertTrue(activoAntes);
         sm.inhabilitarMenu(menuId);
-        (,, bool activoDespues,,) = sm.menus(menuId);
+        (, bool activoDespues,,,) = sm.menus(menuId);
         assertFalse(activoDespues);
     }
 
@@ -203,13 +206,13 @@ contract SecurityManagerTest is Test {
     }
 
     function test_CrearCuenta_DireccionInvalida_Revierte() public {
-        vm.expectRevert("Direccion invalida");
+        vm.expectRevert(abi.encodeWithSelector(SecurityManager.DireccionInvalida.selector));
         sm.crearCuenta(address(0), "Zero");
     }
 
     function test_CrearCuenta_CuentaYaExiste_Revierte() public {
         sm.crearCuenta(attacker, "Primera");
-        vm.expectRevert("La cuenta ya existe");
+        vm.expectRevert(abi.encodeWithSelector(SecurityManager.CuentaYaExiste.selector, attacker));
         sm.crearCuenta(attacker, "Segunda");
     }
 
@@ -223,7 +226,7 @@ contract SecurityManagerTest is Test {
     }
 
     function test_ObtenerCuenta_NoExiste_Revierte() public {
-        vm.expectRevert("La cuenta no existe");
+        vm.expectRevert(abi.encodeWithSelector(SecurityManager.CuentaNoExiste.selector, attacker));
         sm.obtenerCuenta(attacker);
     }
 
@@ -251,7 +254,7 @@ contract SecurityManagerTest is Test {
         emit CuentaEliminada(attacker, block.timestamp);
         sm.eliminarCuenta(attacker);
 
-        vm.expectRevert("La cuenta no existe");
+        vm.expectRevert(abi.encodeWithSelector(SecurityManager.CuentaNoExiste.selector, attacker));
         sm.obtenerCuenta(attacker);
     }
 

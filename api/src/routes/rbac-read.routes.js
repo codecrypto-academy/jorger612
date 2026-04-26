@@ -8,6 +8,7 @@ import {
   getHistorialRol,
   getHistorialUsuario,
   getHistorialMenu,
+  postInvalidate,
 } from '../controllers/rbac-read.controller.js';
 
 export async function rbacReadRoutes(fastify) {
@@ -20,4 +21,5 @@ export async function rbacReadRoutes(fastify) {
   fastify.get('/historial/rol/:rolId', getHistorialRol);
   fastify.get('/historial/usuario/:usuarioId', getHistorialUsuario);
   fastify.get('/historial/menu/:menuId', getHistorialMenu);
+  fastify.post('/invalidate', postInvalidate);
 }

@@ -3,9 +3,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { CuentaAutorizada } from '@/types';
-import { getReadOnlyContract, getSignedContract, parseContractError } from '@/lib/contract';
+import { getSignedContract, parseContractError } from '@/lib/contract';
 import { useWallet } from '@/context/WalletContext';
-import { apiGet } from '@/lib/api';
+import { apiGet, apiPost } from '@/lib/api';
 
 export function useCuentas() {
   const { account } = useWallet();
@@ -37,6 +37,7 @@ export function useCuentas() {
     const contract = getSignedContract(signer);
     const tx = await contract.crearCuenta(wallet, nombre);
     await tx.wait();
+    await apiPost('/rbac/invalidate');
     await fetchCuentas();
   }, [fetchCuentas]);
 
@@ -44,6 +45,7 @@ export function useCuentas() {
     const contract = getSignedContract(signer);
     const tx = await contract.actualizarCuenta(wallet, nuevoNombre);
     await tx.wait();
+    await apiPost('/rbac/invalidate');
     await fetchCuentas();
   }, [fetchCuentas]);
 
@@ -51,6 +53,7 @@ export function useCuentas() {
     const contract = getSignedContract(signer);
     const tx = await contract.eliminarCuenta(wallet);
     await tx.wait();
+    await apiPost('/rbac/invalidate');
     await fetchCuentas();
   }, [fetchCuentas]);
 
