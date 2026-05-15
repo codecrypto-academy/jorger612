@@ -10,67 +10,16 @@ import { SyncBar } from '@/components/dashboard/SyncBar';
 import { DashboardRolesTable } from '@/components/dashboard/DashboardRolesTable';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { BlockchainStatus } from '@/components/dashboard/BlockchainStatus';
-import { ShieldCheckIcon, WalletIcon, InformationCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { InformationCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/Button';
-
-function WelcomeCard() {
-  const { connect } = useWallet();
-  return (
-    <div className="ds-container" style={{ animation: 'dsFadeIn 0.35s ease' }}>
-      <div className="ds-card" style={{ maxWidth: 440, margin: '0 auto', textAlign: 'center' }}>
-        <div
-          style={{
-            width: 64,
-            height: 64,
-            margin: '0 auto 24px',
-            borderRadius: 16,
-            background: 'var(--ds-gradient-primary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#fff',
-            boxShadow: '0 8px 24px rgba(102, 126, 234, 0.4)',
-          }}
-        >
-          <ShieldCheckIcon style={{ width: 36, height: 36 }} />
-        </div>
-        <h1 style={{ margin: '0 0 12px', fontSize: '1.75rem', fontWeight: 700, color: 'var(--ds-text-title)' }}>
-          Bienvenido
-        </h1>
-        <p style={{ color: 'var(--ds-text-secondary)', fontSize: 14, lineHeight: 1.6, marginBottom: 24 }}>
-          Conecta MetaMask para acceder al <strong style={{ color: 'var(--ds-accent-start)' }}>centro de control RBAC</strong>{' '}
-          en blockchain.
-        </p>
-        <button type="button" onClick={connect} data-testid="btn-connect-metamask" className="ds-btn" style={{ width: '100%', textTransform: 'none' }}>
-          <WalletIcon style={{ width: 20, height: 20 }} /> Conectar con MetaMask
-        </button>
-        <p style={{ fontSize: 12, color: 'var(--ds-gray-600)', marginTop: 20, marginBottom: 0 }}>
-          Necesitas la extensión MetaMask instalada
-        </p>
-        <Link
-          href="/market"
-          style={{
-            display: 'inline-block',
-            marginTop: 14,
-            fontSize: 14,
-            fontWeight: 600,
-            color: 'var(--ds-accent-start)',
-            textDecoration: 'none',
-          }}
-        >
-          Mi Primera Vez
-        </Link>
-      </div>
-    </div>
-  );
-}
+import { RbacLanding } from '@/components/landing/RbacLanding';
 
 export default function DashboardPage() {
   const { isConnected, account, isOwner } = useWallet();
   const { isAuthorized, loading: authLoading } = useIsCuentaAutorizada(account);
   const { loading, error, errorLevel, roles, actividad, stats, refresh } = useDashboardData(isConnected);
 
-  if (!isConnected) return <WelcomeCard />;
+  if (!isConnected) return <RbacLanding />;
 
   return (
     <div className="ds-dashboard" style={{ animation: 'dsFadeIn 0.35s ease' }}>

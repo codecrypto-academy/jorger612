@@ -12,7 +12,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { isConnected } = useWallet();
   const isDesignDemo = pathname?.startsWith('/demo/diseno') ?? false;
   const isMarket = pathname === '/market';
-  const isLanding = (pathname === '/' && !isConnected) || isMarket;
+  const isHomeLanding = pathname === '/' && !isConnected;
+  const isLanding = isHomeLanding || isMarket;
 
   if (isDesignDemo) {
     return <>{children}</>;
@@ -20,7 +21,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (isLanding) {
     return (
-      <div className="ds-landing">
+      <div className={`ds-landing${isHomeLanding ? ' ds-landing--rbac' : ''}`}>
         <Navbar variant="light" onMenuClick={() => {}} />
         <main className="ds-landing__main">{children}</main>
       </div>
