@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import { getContract } from '../config/blockchain.js';
 import { queryFilterSafe } from '../utils/queryFilterSafe.js';
 import { getRedis, isRedisEnabled } from './redis.service.js';
+import { getIndexedRolesList } from './permissions-index.service.js';
 
 const CACHE_PREFIX = 'rbac:read-cache:v2';
 const CACHE_TTL_SECONDS = Number(process.env.RBAC_READ_CACHE_TTL_SECONDS ?? 120);
@@ -48,7 +49,29 @@ async function getEntityIds(contract, filterFactory) {
 export async function listRoles({ account } = {}) {
   const accountNorm = normalizeAddress(account);
   return withReadCache('roles', accountNorm, async () => {
+    if (isRedisEnabled()) {
+      const indexed = await getIndexedRolesList(accountNorm);
+      if (indexed !== null) {
+        return indexed;
+      }
+    }
+
     const contract = getContract();
+    if (typeof contract.obtenerTodosRoles === 'function') {
+      const arr = await contract.obtenerTodosRoles();
+      const rows = arr
+        .map((r) => ({
+          id: Number(r.id),
+          nombre: String(r.nombre || ''),
+          activo: Boolean(r.activo),
+          timestamp: Number(r.timestamp || 0),
+          ejecutor: String(r.ejecutor || ''),
+        }))
+        .filter((r) => r.id > 0);
+      if (!accountNorm) return rows;
+      return rows.filter((r) => normalizeAddress(r.ejecutor) === accountNorm);
+    }
+
     const ids = await getEntityIds(contract, () => contract.filters.RolCreado());
     const rows = await Promise.all(ids.map(async (id) => {
       const r = await contract.roles(id);

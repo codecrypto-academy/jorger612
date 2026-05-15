@@ -21,6 +21,72 @@ Content-Type: application/json
 }
 
 ###############################################################################
+### RBAC — lectura desde contrato (GET) + invalidación de caché (POST)
+### Postman: importa este archivo o copia cada request; usa el mismo {{baseUrl}}
+### para Collection Runner / pruebas de carga. Respuestas típicas: { "items": [...] }
+### excepto menu-access: { "menuId", "items" }. Requiere RPC + contrato (Anvil).
+###############################################################################
+
+### Listar roles (opcional: filtra por wallet que creó el rol)
+GET {{baseUrl}}/rbac/roles
+Accept: application/json
+
+### Listar roles filtrados por cuenta ejecutora
+GET {{baseUrl}}/rbac/roles?account={{address}}
+Accept: application/json
+
+### Listar usuarios
+GET {{baseUrl}}/rbac/usuarios
+Accept: application/json
+
+### Listar usuarios filtrados por cuenta ejecutora
+GET {{baseUrl}}/rbac/usuarios?account={{address}}
+Accept: application/json
+
+### Listar menús
+GET {{baseUrl}}/rbac/menus
+Accept: application/json
+
+### Listar menús filtrados por cuenta ejecutora
+GET {{baseUrl}}/rbac/menus?account={{address}}
+Accept: application/json
+
+### Vínculos rol ↔ menús (todos los roles)
+GET {{baseUrl}}/rbac/vinculos
+Accept: application/json
+
+### Vínculos para un rol concreto (sustituye rolId)
+@rolId = 1
+GET {{baseUrl}}/rbac/vinculos?rolId={{rolId}}
+Accept: application/json
+
+### Acceso por menú: qué roles tienen el menú (menuId > 0 obligatorio)
+@menuId = 1
+GET {{baseUrl}}/rbac/menu-access/{{menuId}}
+Accept: application/json
+
+### Cuentas autorizadas (on-chain)
+GET {{baseUrl}}/rbac/cuentas
+Accept: application/json
+
+### Histórico de eventos de un rol (ajusta rolId a uno existente)
+GET {{baseUrl}}/rbac/historial/rol/{{rolId}}
+Accept: application/json
+
+### Histórico de eventos de un usuario
+@usuarioId = 1
+GET {{baseUrl}}/rbac/historial/usuario/{{usuarioId}}
+Accept: application/json
+
+### Histórico de eventos de un menú
+GET {{baseUrl}}/rbac/historial/menu/{{menuId}}
+Accept: application/json
+
+### Invalidar caché de lectura RBAC en Redis (si Redis está deshabilitado, no-op)
+POST {{baseUrl}}/rbac/invalidate
+Accept: application/json
+
+###############################################################################
 ### Market — registro de leads (colección market_leads en MongoDB)
 ### Respuesta 201: { "ok": true, "id": "<ObjectId>" }
 ### Errores 400: { "error": "bad_request", "message": "..." }
