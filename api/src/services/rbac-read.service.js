@@ -10,6 +10,7 @@ import {
   getIndexedHistorialRol,
   getIndexedHistorialUsuario,
   getIndexedHistorialMenu,
+  getIndexedActividadReciente,
 } from './permissions-index.service.js';
 
 const CACHE_PREFIX = 'rbac:read-cache:v2';
@@ -276,6 +277,19 @@ function toHistorialItem(ev, action, detail) {
     timestamp: Number(ev.args?.timestamp || 0),
     blockNumber: Number(ev.blockNumber || 0),
   };
+}
+
+export async function listActividadReciente({ limit = 10 } = {}) {
+  const lim = Math.min(50, Math.max(1, Number(limit) || 10));
+  return withReadCache('actividad-reciente', String(lim), async () => {
+    if (isRedisEnabled()) {
+      const indexed = await getIndexedActividadReciente(lim);
+      if (indexed !== null) {
+        return indexed;
+      }
+    }
+    return [];
+  });
 }
 
 export async function historialRol(rolId) {

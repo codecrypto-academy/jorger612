@@ -82,6 +82,10 @@ Accept: application/json
 GET {{baseUrl}}/rbac/historial/menu/{{menuId}}
 Accept: application/json
 
+### Actividad reciente (feed global desde índice Redis)
+GET {{baseUrl}}/rbac/actividad-reciente?limit=8
+Accept: application/json
+
 ### Invalidar caché de lectura RBAC en Redis (si Redis está deshabilitado, no-op)
 POST {{baseUrl}}/rbac/invalidate
 Accept: application/json

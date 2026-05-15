@@ -75,6 +75,16 @@ const nextConfig: NextConfig = {
       ?? process.env.CONTRACT_DEPLOY_BLOCK
       ?? sharedEnv.CONTRACT_DEPLOY_BLOCK
       ?? '0',
+    NEXT_PUBLIC_NETWORK_NAME:
+      process.env.NEXT_PUBLIC_NETWORK_NAME
+      ?? process.env.NETWORK_NAME
+      ?? sharedEnv.NETWORK_NAME
+      ?? '',
+    NEXT_PUBLIC_CONTRACT_DISPLAY_NAME:
+      process.env.NEXT_PUBLIC_CONTRACT_DISPLAY_NAME
+      ?? process.env.CONTRACT_DISPLAY_NAME
+      ?? sharedEnv.CONTRACT_DISPLAY_NAME
+      ?? 'SecurityManager',
   },
 };
 

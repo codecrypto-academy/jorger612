@@ -39,8 +39,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         />
         <div className="ds-main-col">
           <Navbar onMenuClick={() => setMobileMenuOpen(true)} variant={isDashboard ? 'light' : 'light'} />
-          <main className="ds-main-scroll">
-            <div className="ds-page-inner">{children}</div>
+          <main className={`ds-main-scroll${isDashboard ? ' ds-main-scroll--dashboard' : ''}`}>
+            <div className={isDashboard ? 'ds-page-inner ds-page-inner--wide' : 'ds-page-inner'}>{children}</div>
           </main>
         </div>
       </div>

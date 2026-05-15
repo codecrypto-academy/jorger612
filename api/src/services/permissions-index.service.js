@@ -79,6 +79,10 @@ function keyHistorialMenu(menuId) {
   return `${KEY_PREFIX}:historial:menu:${menuId}`;
 }
 
+function keyHistorialRecentFeed() {
+  return `${KEY_PREFIX}:historial:recentFeed`;
+}
+
 function historialZMember(log, eventName) {
   const bn = log.blockNumber != null ? Number(log.blockNumber) : 0;
   const li = log.index != null ? Number(log.index) : 0;
@@ -108,10 +112,16 @@ async function appendHistorialFromParsed(redis, parsed, log) {
   let item = null;
   /** @type {string | null} */
   let zkey = null;
+  /** @type {'rol' | 'usuario' | 'menu' | null} */
+  let entityType = null;
+  /** @type {number} */
+  let entityId = 0;
 
   if (name === 'RolCreado') {
     const id = Number(args?.id ?? 0);
     if (!id) return;
+    entityType = 'rol';
+    entityId = id;
     zkey = keyHistorialRol(id);
     item = {
       accion: 'Rol creado',
@@ -123,6 +133,8 @@ async function appendHistorialFromParsed(redis, parsed, log) {
   } else if (name === 'RolModificado') {
     const id = Number(args?.id ?? 0);
     if (!id) return;
+    entityType = 'rol';
+    entityId = id;
     zkey = keyHistorialRol(id);
     item = {
       accion: 'Nombre modificado',
@@ -134,6 +146,8 @@ async function appendHistorialFromParsed(redis, parsed, log) {
   } else if (name === 'RolInhabilitado') {
     const id = Number(args?.id ?? 0);
     if (!id) return;
+    entityType = 'rol';
+    entityId = id;
     zkey = keyHistorialRol(id);
     item = {
       accion: 'Rol inhabilitado',
@@ -145,6 +159,8 @@ async function appendHistorialFromParsed(redis, parsed, log) {
   } else if (name === 'UsuarioCreado') {
     const id = Number(args?.id ?? 0);
     if (!id) return;
+    entityType = 'usuario';
+    entityId = id;
     zkey = keyHistorialUsuario(id);
     item = {
       accion: 'Usuario creado',
@@ -156,6 +172,8 @@ async function appendHistorialFromParsed(redis, parsed, log) {
   } else if (name === 'UsuarioModificado') {
     const id = Number(args?.id ?? 0);
     if (!id) return;
+    entityType = 'usuario';
+    entityId = id;
     zkey = keyHistorialUsuario(id);
     item = {
       accion: 'Usuario modificado',
@@ -167,6 +185,8 @@ async function appendHistorialFromParsed(redis, parsed, log) {
   } else if (name === 'UsuarioInhabilitado') {
     const id = Number(args?.id ?? 0);
     if (!id) return;
+    entityType = 'usuario';
+    entityId = id;
     zkey = keyHistorialUsuario(id);
     item = {
       accion: 'Usuario inhabilitado',
@@ -178,6 +198,8 @@ async function appendHistorialFromParsed(redis, parsed, log) {
   } else if (name === 'MenuCreado') {
     const id = Number(args?.id ?? 0);
     if (!id) return;
+    entityType = 'menu';
+    entityId = id;
     zkey = keyHistorialMenu(id);
     item = {
       accion: 'Menu creado',
@@ -189,6 +211,8 @@ async function appendHistorialFromParsed(redis, parsed, log) {
   } else if (name === 'MenuModificado') {
     const id = Number(args?.id ?? 0);
     if (!id) return;
+    entityType = 'menu';
+    entityId = id;
     zkey = keyHistorialMenu(id);
     item = {
       accion: 'Nombre modificado',
@@ -200,6 +224,8 @@ async function appendHistorialFromParsed(redis, parsed, log) {
   } else if (name === 'MenuInhabilitado') {
     const id = Number(args?.id ?? 0);
     if (!id) return;
+    entityType = 'menu';
+    entityId = id;
     zkey = keyHistorialMenu(id);
     item = {
       accion: 'Menu inhabilitado',
@@ -212,6 +238,8 @@ async function appendHistorialFromParsed(redis, parsed, log) {
     const menuId = Number(args?.menuId ?? 0);
     const rolId = Number(args?.rolId ?? 0);
     if (!menuId) return;
+    entityType = 'menu';
+    entityId = menuId;
     zkey = keyHistorialMenu(menuId);
     item = {
       accion: `Vinculado a Rol #${rolId}`,
@@ -224,6 +252,8 @@ async function appendHistorialFromParsed(redis, parsed, log) {
     const menuId = Number(args?.menuId ?? 0);
     const rolId = Number(args?.rolId ?? 0);
     if (!menuId) return;
+    entityType = 'menu';
+    entityId = menuId;
     zkey = keyHistorialMenu(menuId);
     item = {
       accion: `Desvinculado de Rol #${rolId}`,
@@ -234,9 +264,16 @@ async function appendHistorialFromParsed(redis, parsed, log) {
     };
   }
 
-  if (!item || !zkey) return;
+  if (!item || !zkey || !entityType || !entityId) return;
   const payload = JSON.stringify({ ...item, _zid: member });
   await redis.zadd(zkey, score, payload);
+  const feedPayload = JSON.stringify({
+    ...item,
+    _zid: member,
+    entityType,
+    entityId,
+  });
+  await redis.zadd(keyHistorialRecentFeed(), score, feedPayload);
 }
 
 async function ensureHistorialBackfill(provider, contract, redis, logger) {
@@ -246,6 +283,7 @@ async function ensureHistorialBackfill(provider, contract, redis, logger) {
   try {
     const latest = await provider.getBlockNumber();
     const safeHead = Math.max(CONTRACT_DEPLOY_BLOCK, latest - DEFAULT_CONFIRMATIONS);
+    await redis.del(keyHistorialRecentFeed());
     const logs = await fetchLogsChunked(provider, contract.target, CONTRACT_DEPLOY_BLOCK, safeHead);
     for (const log of logs) {
       let parsed = null;
@@ -922,6 +960,41 @@ export async function getIndexedHistorialUsuario(usuarioId) {
       ? a.blockNumber - b.blockNumber
       : a.timestamp - b.timestamp
   ));
+  return rows;
+}
+
+/**
+ * @param {number} [limit]
+ * @returns {Promise<null | Array<{ entityType: string, entityId: number, accion: string, detalle: string, ejecutor: string, timestamp: number, blockNumber: number }>>}
+ */
+export async function getIndexedActividadReciente(limit = 10) {
+  const lim = Math.min(50, Math.max(1, Number(limit) || 10));
+  if (!isRedisEnabled()) return null;
+  const redis = getRedis();
+  if ((await redis.get(HISTORIAL_SCHEMA_KEY)) !== 'v1') {
+    return null;
+  }
+  const raw = await redis.zrevrange(keyHistorialRecentFeed(), 0, lim - 1);
+  const rows = [];
+  for (const entry of raw) {
+    try {
+      const o = JSON.parse(entry);
+      if (o && typeof o === 'object') {
+        delete o._zid;
+        rows.push({
+          entityType: String(o.entityType || ''),
+          entityId: Number(o.entityId || 0),
+          accion: String(o.accion || ''),
+          detalle: String(o.detalle || ''),
+          ejecutor: String(o.ejecutor || ''),
+          timestamp: Number(o.timestamp || 0),
+          blockNumber: Number(o.blockNumber || 0),
+        });
+      }
+    } catch {
+      // ignorar
+    }
+  }
   return rows;
 }
 

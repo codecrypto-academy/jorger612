@@ -3,14 +3,19 @@
 import { usePathname } from 'next/navigation';
 import { Bars3Icon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import { WalletButton } from '@/components/wallet/WalletButton';
+import { NETWORK_NAME } from '@/lib/config';
+import { useWallet } from '@/context/WalletContext';
 
-const TITLES: Record<string, string> = {
-  '/': 'Dashboard',
-  '/roles': 'Gestion de Roles',
-  '/usuarios': 'Gestion de Usuarios',
-  '/menus': 'Gestion de Menus',
-  '/peticiones': 'Ver Peticiones',
-  '/cuentas': 'Gestionar Cuentas',
+const TITLES: Record<string, { title: string; subtitle: string }> = {
+  '/': {
+    title: 'Centro de Control RBAC',
+    subtitle: 'Gestión de roles, usuarios y permisos sobre blockchain',
+  },
+  '/roles': { title: 'Gestión de Roles', subtitle: 'Sistema RBAC en blockchain' },
+  '/usuarios': { title: 'Gestión de Usuarios', subtitle: 'Sistema RBAC en blockchain' },
+  '/menus': { title: 'Gestión de Menús', subtitle: 'Sistema RBAC en blockchain' },
+  '/peticiones': { title: 'Ver Peticiones', subtitle: 'Sistema RBAC en blockchain' },
+  '/cuentas': { title: 'Gestionar Cuentas', subtitle: 'Sistema RBAC en blockchain' },
 };
 
 interface NavbarProps {
@@ -20,12 +25,14 @@ interface NavbarProps {
 
 export function Navbar({ onMenuClick, variant = 'dark' }: NavbarProps) {
   const pathname = usePathname();
-  const title = TITLES[pathname] ?? 'SecurityManager';
-  const landing = variant === 'light';
+  const { isConnected } = useWallet();
+  const landing = variant === 'light' && pathname !== '/';
   const isMarket = pathname === '/market';
+  const meta = TITLES[pathname] ?? { title: 'SecurityManager', subtitle: 'Sistema RBAC en blockchain' };
+  const isDashboard = pathname === '/';
 
   return (
-    <header className="ds-navbar">
+    <header className={`ds-navbar${isDashboard ? ' ds-navbar--dashboard' : ''}`}>
       <div className="ds-navbar__left">
         {!landing && (
           <button
@@ -38,7 +45,7 @@ export function Navbar({ onMenuClick, variant = 'dark' }: NavbarProps) {
             <Bars3Icon style={{ width: 24, height: 24 }} />
           </button>
         )}
-        {landing ? (
+        {landing || isMarket ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div className="ds-sidebar__brand-icon" style={{ width: 40, height: 40 }}>
               <ShieldCheckIcon style={{ width: 22, height: 22 }} />
@@ -50,12 +57,20 @@ export function Navbar({ onMenuClick, variant = 'dark' }: NavbarProps) {
           </div>
         ) : (
           <div className="ds-navbar__titles">
-            <h1>{title}</h1>
-            <p>Sistema RBAC Inmutable en Blockchain</p>
+            <h1>{meta.title}</h1>
+            <p>{meta.subtitle}</p>
           </div>
         )}
       </div>
-      <WalletButton variant={landing ? 'landing' : 'default'} />
+      <div className="ds-navbar__right">
+        {isConnected && !isMarket && (
+          <span className="ds-network-pill" title={`Red: ${NETWORK_NAME}`}>
+            <span className="ds-inline-dot ds-inline-dot--ok" />
+            {NETWORK_NAME} · Conectado
+          </span>
+        )}
+        <WalletButton variant={landing || isMarket ? 'landing' : 'default'} />
+      </div>
     </header>
   );
 }

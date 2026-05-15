@@ -8,6 +8,7 @@ import {
   historialRol,
   historialUsuario,
   historialMenu,
+  listActividadReciente,
   invalidateReadCache,
 } from '../services/rbac-read.service.js';
 
@@ -72,6 +73,12 @@ export async function getHistorialUsuario(request, reply) {
     return reply.code(400).send({ error: 'bad_request', message: 'usuarioId inválido' });
   }
   const rows = await historialUsuario(usuarioId);
+  return reply.send({ items: rows });
+}
+
+export async function getActividadReciente(request, reply) {
+  const limit = request.query?.limit ? parsePositiveInt(request.query.limit) : 10;
+  const rows = await listActividadReciente({ limit: limit ?? 10 });
   return reply.send({ items: rows });
 }
 
