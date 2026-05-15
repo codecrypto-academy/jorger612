@@ -7,6 +7,9 @@ import {
   getIndexedUsuariosList,
   getIndexedMenusList,
   getIndexedVinculosList,
+  getIndexedHistorialRol,
+  getIndexedHistorialUsuario,
+  getIndexedHistorialMenu,
 } from './permissions-index.service.js';
 
 const CACHE_PREFIX = 'rbac:read-cache:v2';
@@ -277,7 +280,17 @@ function toHistorialItem(ev, action, detail) {
 
 export async function historialRol(rolId) {
   const id = Number(rolId || 0);
+  if (!id) {
+    return [];
+  }
   return withReadCache('historial-rol', String(id), async () => {
+    if (isRedisEnabled()) {
+      const indexed = await getIndexedHistorialRol(id);
+      if (indexed !== null) {
+        return indexed;
+      }
+    }
+
     const contract = getContract();
     const [creados, modificados, inhabilitados] = await Promise.all([
       queryFilterSafe(contract, contract.filters.RolCreado(id)),
@@ -294,7 +307,17 @@ export async function historialRol(rolId) {
 
 export async function historialUsuario(usuarioId) {
   const id = Number(usuarioId || 0);
+  if (!id) {
+    return [];
+  }
   return withReadCache('historial-usuario', String(id), async () => {
+    if (isRedisEnabled()) {
+      const indexed = await getIndexedHistorialUsuario(id);
+      if (indexed !== null) {
+        return indexed;
+      }
+    }
+
     const contract = getContract();
     const [creados, modificados, inhabilitados] = await Promise.all([
       queryFilterSafe(contract, contract.filters.UsuarioCreado(id)),
@@ -311,7 +334,17 @@ export async function historialUsuario(usuarioId) {
 
 export async function historialMenu(menuId) {
   const id = Number(menuId || 0);
+  if (!id) {
+    return [];
+  }
   return withReadCache('historial-menu', String(id), async () => {
+    if (isRedisEnabled()) {
+      const indexed = await getIndexedHistorialMenu(id);
+      if (indexed !== null) {
+        return indexed;
+      }
+    }
+
     const contract = getContract();
     const [creados, modificados, inhabilitados, vinculados, desvinculados] = await Promise.all([
       queryFilterSafe(contract, contract.filters.MenuCreado(id)),

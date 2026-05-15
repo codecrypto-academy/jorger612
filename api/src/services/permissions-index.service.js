@@ -8,6 +8,8 @@ const META_LAST_BLOCK_KEY = `${KEY_PREFIX}:meta:lastProcessedBlock`;
 const ROLES_LIST_SCHEMA_KEY = `${KEY_PREFIX}:rol:listSchema`;
 const USERS_LIST_SCHEMA_KEY = `${KEY_PREFIX}:user:listSchema`;
 const MENUS_LIST_SCHEMA_KEY = `${KEY_PREFIX}:menu:listSchema`;
+/** Histórico por entidad (ZSET); backfill único de logs + append en vivo (idempotente por miembro). */
+const HISTORIAL_SCHEMA_KEY = `${KEY_PREFIX}:historial:listSchema`;
 const DEFAULT_CONFIRMATIONS = Number(process.env.INDEXER_CONFIRMATIONS ?? 6);
 const DEFAULT_POLL_MS = Number(process.env.INDEXER_POLL_MS ?? 12000);
 const DEFAULT_BLOCK_CHUNK = Number(process.env.INDEXER_BLOCK_CHUNK ?? 2000);
@@ -63,6 +65,201 @@ function keyMenuAllIds() {
 
 function keyMenusByEjecutor(ejecutorNorm) {
   return `${KEY_PREFIX}:menu:byEjecutor:${ejecutorNorm}`;
+}
+
+function keyHistorialRol(rolId) {
+  return `${KEY_PREFIX}:historial:rol:${rolId}`;
+}
+
+function keyHistorialUsuario(usuarioId) {
+  return `${KEY_PREFIX}:historial:usuario:${usuarioId}`;
+}
+
+function keyHistorialMenu(menuId) {
+  return `${KEY_PREFIX}:historial:menu:${menuId}`;
+}
+
+function historialZMember(log, eventName) {
+  const bn = log.blockNumber != null ? Number(log.blockNumber) : 0;
+  const li = log.index != null ? Number(log.index) : 0;
+  return `${bn}:${li}:${eventName}`;
+}
+
+function historialZScore(log) {
+  const bn = log.blockNumber != null ? Number(log.blockNumber) : 0;
+  const li = log.index != null ? Number(log.index) : 0;
+  return bn * 1_000_000_000_000 + li;
+}
+
+/**
+ * @param {import('ioredis').default} redis
+ * @param {import('ethers').LogDescription} parsed
+ * @param {import('ethers').Log} log
+ */
+async function appendHistorialFromParsed(redis, parsed, log) {
+  const { name, args } = parsed;
+  const blockNumber = log.blockNumber != null ? Number(log.blockNumber) : 0;
+  const ts = Number(args?.timestamp ?? 0);
+  const ejecutor = String(args?.ejecutor ?? '');
+  const member = historialZMember(log, name);
+  const score = historialZScore(log);
+
+  /** @type {{ accion: string, detalle: string, ejecutor: string, timestamp: number, blockNumber: number } | null} */
+  let item = null;
+  /** @type {string | null} */
+  let zkey = null;
+
+  if (name === 'RolCreado') {
+    const id = Number(args?.id ?? 0);
+    if (!id) return;
+    zkey = keyHistorialRol(id);
+    item = {
+      accion: 'Rol creado',
+      detalle: String(args?.nombre ?? ''),
+      ejecutor,
+      timestamp: ts,
+      blockNumber,
+    };
+  } else if (name === 'RolModificado') {
+    const id = Number(args?.id ?? 0);
+    if (!id) return;
+    zkey = keyHistorialRol(id);
+    item = {
+      accion: 'Nombre modificado',
+      detalle: `${String(args?.nombreAnterior ?? '')} → ${String(args?.nombreNuevo ?? '')}`,
+      ejecutor,
+      timestamp: ts,
+      blockNumber,
+    };
+  } else if (name === 'RolInhabilitado') {
+    const id = Number(args?.id ?? 0);
+    if (!id) return;
+    zkey = keyHistorialRol(id);
+    item = {
+      accion: 'Rol inhabilitado',
+      detalle: '',
+      ejecutor,
+      timestamp: ts,
+      blockNumber,
+    };
+  } else if (name === 'UsuarioCreado') {
+    const id = Number(args?.id ?? 0);
+    if (!id) return;
+    zkey = keyHistorialUsuario(id);
+    item = {
+      accion: 'Usuario creado',
+      detalle: `${String(args?.login ?? '')} · ${String(args?.nombre ?? '')}`,
+      ejecutor,
+      timestamp: ts,
+      blockNumber,
+    };
+  } else if (name === 'UsuarioModificado') {
+    const id = Number(args?.id ?? 0);
+    if (!id) return;
+    zkey = keyHistorialUsuario(id);
+    item = {
+      accion: 'Usuario modificado',
+      detalle: `Rol #${String(args?.rolIdAnterior ?? '')} → Rol #${String(args?.rolIdNuevo ?? '')}`,
+      ejecutor,
+      timestamp: ts,
+      blockNumber,
+    };
+  } else if (name === 'UsuarioInhabilitado') {
+    const id = Number(args?.id ?? 0);
+    if (!id) return;
+    zkey = keyHistorialUsuario(id);
+    item = {
+      accion: 'Usuario inhabilitado',
+      detalle: '',
+      ejecutor,
+      timestamp: ts,
+      blockNumber,
+    };
+  } else if (name === 'MenuCreado') {
+    const id = Number(args?.id ?? 0);
+    if (!id) return;
+    zkey = keyHistorialMenu(id);
+    item = {
+      accion: 'Menu creado',
+      detalle: String(args?.nombre ?? ''),
+      ejecutor,
+      timestamp: ts,
+      blockNumber,
+    };
+  } else if (name === 'MenuModificado') {
+    const id = Number(args?.id ?? 0);
+    if (!id) return;
+    zkey = keyHistorialMenu(id);
+    item = {
+      accion: 'Nombre modificado',
+      detalle: `${String(args?.nombreAnterior ?? '')} → ${String(args?.nombreNuevo ?? '')}`,
+      ejecutor,
+      timestamp: ts,
+      blockNumber,
+    };
+  } else if (name === 'MenuInhabilitado') {
+    const id = Number(args?.id ?? 0);
+    if (!id) return;
+    zkey = keyHistorialMenu(id);
+    item = {
+      accion: 'Menu inhabilitado',
+      detalle: '',
+      ejecutor,
+      timestamp: ts,
+      blockNumber,
+    };
+  } else if (name === 'MenuVinculadoARol') {
+    const menuId = Number(args?.menuId ?? 0);
+    const rolId = Number(args?.rolId ?? 0);
+    if (!menuId) return;
+    zkey = keyHistorialMenu(menuId);
+    item = {
+      accion: `Vinculado a Rol #${rolId}`,
+      detalle: '',
+      ejecutor,
+      timestamp: ts,
+      blockNumber,
+    };
+  } else if (name === 'MenuDesvinculadoDeRol') {
+    const menuId = Number(args?.menuId ?? 0);
+    const rolId = Number(args?.rolId ?? 0);
+    if (!menuId) return;
+    zkey = keyHistorialMenu(menuId);
+    item = {
+      accion: `Desvinculado de Rol #${rolId}`,
+      detalle: '',
+      ejecutor,
+      timestamp: ts,
+      blockNumber,
+    };
+  }
+
+  if (!item || !zkey) return;
+  const payload = JSON.stringify({ ...item, _zid: member });
+  await redis.zadd(zkey, score, payload);
+}
+
+async function ensureHistorialBackfill(provider, contract, redis, logger) {
+  if ((await redis.get(HISTORIAL_SCHEMA_KEY)) === 'v1') {
+    return;
+  }
+  try {
+    const latest = await provider.getBlockNumber();
+    const safeHead = Math.max(CONTRACT_DEPLOY_BLOCK, latest - DEFAULT_CONFIRMATIONS);
+    const logs = await fetchLogsChunked(provider, contract.target, CONTRACT_DEPLOY_BLOCK, safeHead);
+    for (const log of logs) {
+      let parsed = null;
+      try {
+        parsed = contract.interface.parseLog(log);
+      } catch {
+        parsed = null;
+      }
+      if (parsed) await appendHistorialFromParsed(redis, parsed, log);
+    }
+    await redis.set(HISTORIAL_SCHEMA_KEY, 'v1');
+  } catch (err) {
+    logger?.error({ err }, 'ensureHistorialBackfill falló');
+  }
 }
 
 function normAddress(address) {
@@ -377,7 +574,8 @@ async function rebuildMenusByRole(contract, redis, rolId) {
   await tx.exec();
 }
 
-async function processLog(contract, redis, parsed) {
+async function processLog(contract, redis, parsed, log) {
+  await appendHistorialFromParsed(redis, parsed, log);
   const { name, args } = parsed;
   if (name === 'UsuarioCreado' || name === 'UsuarioModificado' || name === 'UsuarioInhabilitado') {
     await upsertUser(contract, redis, Number(args.id));
@@ -444,6 +642,8 @@ async function syncIndexOnce(logger) {
   const latest = await provider.getBlockNumber();
   const safeHead = Math.max(CONTRACT_DEPLOY_BLOCK, latest - DEFAULT_CONFIRMATIONS);
 
+  await ensureHistorialBackfill(provider, contract, redis, logger);
+
   const persisted = await redis.get(META_LAST_BLOCK_KEY);
   const lastProcessed = persisted ? Number(persisted) : (CONTRACT_DEPLOY_BLOCK - 1);
   if (lastProcessed >= safeHead) {
@@ -462,7 +662,7 @@ async function syncIndexOnce(logger) {
       parsed = null;
     }
     if (!parsed) continue;
-    await processLog(contract, redis, parsed);
+    await processLog(contract, redis, parsed, log);
   }
 
   await redis.set(META_LAST_BLOCK_KEY, String(safeHead));
@@ -675,6 +875,70 @@ export async function getIndexedVinculosList(rolFilter = 0) {
     rows.push({ rolId: rid, menuIds });
   }
   rows.sort((a, b) => a.rolId - b.rolId);
+  return rows;
+}
+
+function parseHistorialZMember(raw) {
+  try {
+    const o = JSON.parse(raw);
+    if (o && typeof o === 'object') delete o._zid;
+    return o;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * @returns {Promise<null | Array<{ accion: string, detalle: string, ejecutor: string, timestamp: number, blockNumber: number }>>}
+ */
+export async function getIndexedHistorialRol(rolId) {
+  const id = Number(rolId || 0);
+  if (!id || !isRedisEnabled()) return null;
+  const redis = getRedis();
+  if ((await redis.get(HISTORIAL_SCHEMA_KEY)) !== 'v1') {
+    return null;
+  }
+  const members = await redis.zrange(keyHistorialRol(id), 0, -1);
+  const rows = members.map(parseHistorialZMember).filter(Boolean);
+  rows.sort((a, b) => (
+    a.blockNumber !== b.blockNumber
+      ? a.blockNumber - b.blockNumber
+      : a.timestamp - b.timestamp
+  ));
+  return rows;
+}
+
+export async function getIndexedHistorialUsuario(usuarioId) {
+  const id = Number(usuarioId || 0);
+  if (!id || !isRedisEnabled()) return null;
+  const redis = getRedis();
+  if ((await redis.get(HISTORIAL_SCHEMA_KEY)) !== 'v1') {
+    return null;
+  }
+  const members = await redis.zrange(keyHistorialUsuario(id), 0, -1);
+  const rows = members.map(parseHistorialZMember).filter(Boolean);
+  rows.sort((a, b) => (
+    a.blockNumber !== b.blockNumber
+      ? a.blockNumber - b.blockNumber
+      : a.timestamp - b.timestamp
+  ));
+  return rows;
+}
+
+export async function getIndexedHistorialMenu(menuId) {
+  const id = Number(menuId || 0);
+  if (!id || !isRedisEnabled()) return null;
+  const redis = getRedis();
+  if ((await redis.get(HISTORIAL_SCHEMA_KEY)) !== 'v1') {
+    return null;
+  }
+  const members = await redis.zrange(keyHistorialMenu(id), 0, -1);
+  const rows = members.map(parseHistorialZMember).filter(Boolean);
+  rows.sort((a, b) => (
+    a.blockNumber !== b.blockNumber
+      ? a.blockNumber - b.blockNumber
+      : a.timestamp - b.timestamp
+  ));
   return rows;
 }
 
