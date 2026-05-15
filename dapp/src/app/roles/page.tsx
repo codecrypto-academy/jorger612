@@ -17,12 +17,12 @@ import { AlertaCuentaNoAutorizada } from '@/components/ui/AlertaCuentaNoAutoriza
 import { PlusCircleIcon, ArrowPathIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 
 export default function RolesPage() {
-  const { isConnected, account, signer, provider } = useWallet();
+  const { isConnected, account, signer } = useWallet();
   const { isAuthorized, loading: authLoading } = useIsCuentaAutorizada(account);
   const canManage = isConnected && isAuthorized && !authLoading;
   const { roles, loading, fetchRoles, crearRol, modificarRol, inhabilitarRol } = useRoles();
   const { toasts, addToast, removeToast } = useToast();
-  const { fetchHistorialRol, loading: historialLoading } = useHistorial(provider ?? undefined);
+  const { fetchHistorialRol, loading: historialLoading } = useHistorial();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'crear' | 'modificar'>('crear');

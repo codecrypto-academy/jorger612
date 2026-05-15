@@ -20,14 +20,14 @@ import { AlertaCuentaNoAutorizada } from '@/components/ui/AlertaCuentaNoAutoriza
 import { PlusCircleIcon, ArrowPathIcon, UsersIcon } from '@heroicons/react/24/outline';
 
 export default function UsuariosPage() {
-  const { isConnected, account, signer, provider } = useWallet();
+  const { isConnected, account, signer } = useWallet();
   const { isAuthorized, loading: authLoading } = useIsCuentaAutorizada(account);
   const canManage = isConnected && isAuthorized && !authLoading;
   const { usuarios, loading, fetchUsuarios, crearUsuario, modificarUsuario, inhabilitarUsuario } = useUsuarios();
   const { roles, fetchRoles } = useRoles();
   const { obtenerMenusPorRol } = useMenus();
   const { toasts, addToast, removeToast } = useToast();
-  const { fetchHistorialUsuario, loading: historialLoading } = useHistorial(provider ?? undefined);
+  const { fetchHistorialUsuario, loading: historialLoading } = useHistorial();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'crear' | 'modificar'>('crear');

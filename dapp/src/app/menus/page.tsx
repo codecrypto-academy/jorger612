@@ -19,13 +19,13 @@ import { AlertaCuentaNoAutorizada } from '@/components/ui/AlertaCuentaNoAutoriza
 import { PlusCircleIcon, ArrowPathIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
 
 export default function MenusPage() {
-  const { isConnected, account, signer, provider } = useWallet();
+  const { isConnected, account, signer } = useWallet();
   const { isAuthorized, loading: authLoading } = useIsCuentaAutorizada(account);
   const canManage = isConnected && isAuthorized && !authLoading;
   const { menus, loading, fetchMenus, crearMenu, modificarMenu, inhabilitarMenu, vincularMenuARol, desvincularMenuDeRol, verificarAcceso } = useMenus();
   const { roles, fetchRoles } = useRoles();
   const { toasts, addToast, removeToast } = useToast();
-  const { fetchHistorialMenu, loading: historialLoading } = useHistorial(provider ?? undefined);
+  const { fetchHistorialMenu, loading: historialLoading } = useHistorial();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'crear' | 'modificar'>('crear');
