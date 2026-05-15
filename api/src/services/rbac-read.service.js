@@ -2,7 +2,12 @@ import { ethers } from 'ethers';
 import { getContract } from '../config/blockchain.js';
 import { queryFilterSafe } from '../utils/queryFilterSafe.js';
 import { getRedis, isRedisEnabled } from './redis.service.js';
-import { getIndexedRolesList } from './permissions-index.service.js';
+import {
+  getIndexedRolesList,
+  getIndexedUsuariosList,
+  getIndexedMenusList,
+  getIndexedVinculosList,
+} from './permissions-index.service.js';
 
 const CACHE_PREFIX = 'rbac:read-cache:v2';
 const CACHE_TTL_SECONDS = Number(process.env.RBAC_READ_CACHE_TTL_SECONDS ?? 120);
@@ -92,7 +97,31 @@ export async function listRoles({ account } = {}) {
 export async function listUsuarios({ account } = {}) {
   const accountNorm = normalizeAddress(account);
   return withReadCache('usuarios', accountNorm, async () => {
+    if (isRedisEnabled()) {
+      const indexed = await getIndexedUsuariosList(accountNorm);
+      if (indexed !== null) {
+        return indexed;
+      }
+    }
+
     const contract = getContract();
+    if (typeof contract.obtenerTodosUsuarios === 'function') {
+      const arr = await contract.obtenerTodosUsuarios();
+      const rows = arr
+        .map((u) => ({
+          id: Number(u.id),
+          login: String(u.login || ''),
+          nombre: String(u.nombre || ''),
+          rolId: Number(u.rolId || 0),
+          activo: Boolean(u.activo),
+          timestamp: Number(u.timestamp || 0),
+          ejecutor: String(u.ejecutor || ''),
+        }))
+        .filter((u) => u.id > 0);
+      if (!accountNorm) return rows;
+      return rows.filter((u) => normalizeAddress(u.ejecutor) === accountNorm);
+    }
+
     const ids = await getEntityIds(contract, () => contract.filters.UsuarioCreado());
     const rows = await Promise.all(ids.map(async (id) => {
       const u = await contract.usuarios(id);
@@ -115,7 +144,29 @@ export async function listUsuarios({ account } = {}) {
 export async function listMenus({ account } = {}) {
   const accountNorm = normalizeAddress(account);
   return withReadCache('menus', accountNorm, async () => {
+    if (isRedisEnabled()) {
+      const indexed = await getIndexedMenusList(accountNorm);
+      if (indexed !== null) {
+        return indexed;
+      }
+    }
+
     const contract = getContract();
+    if (typeof contract.obtenerTodosMenus === 'function') {
+      const arr = await contract.obtenerTodosMenus();
+      const rows = arr
+        .map((m) => ({
+          id: Number(m.id),
+          nombre: String(m.nombre || ''),
+          activo: Boolean(m.activo),
+          timestamp: Number(m.timestamp || 0),
+          ejecutor: String(m.ejecutor || ''),
+        }))
+        .filter((m) => m.id > 0);
+      if (!accountNorm) return rows;
+      return rows.filter((m) => normalizeAddress(m.ejecutor) === accountNorm);
+    }
+
     const ids = await getEntityIds(contract, () => contract.filters.MenuCreado());
     const rows = await Promise.all(ids.map(async (id) => {
       const m = await contract.menus(id);
@@ -136,9 +187,27 @@ export async function listMenus({ account } = {}) {
 export async function listVinculos({ rolId } = {}) {
   const rolFilter = Number(rolId || 0);
   return withReadCache('vinculos', String(rolFilter || 'all'), async () => {
+    if (isRedisEnabled()) {
+      const indexed = await getIndexedVinculosList(rolFilter);
+      if (indexed !== null) {
+        return indexed;
+      }
+    }
+
     const contract = getContract();
-    const roles = await listRoles();
-    const targetRoles = rolFilter > 0 ? roles.filter((r) => r.id === rolFilter) : roles;
+    let targetRoles;
+    if (typeof contract.obtenerTodosRoles === 'function') {
+      const arr = await contract.obtenerTodosRoles();
+      targetRoles = arr
+        .map((r) => ({ id: Number(r.id) }))
+        .filter((r) => r.id > 0);
+      if (rolFilter > 0) {
+        targetRoles = targetRoles.filter((r) => r.id === rolFilter);
+      }
+    } else {
+      const roles = await listRoles();
+      targetRoles = rolFilter > 0 ? roles.filter((r) => r.id === rolFilter) : roles;
+    }
     const rows = [];
     for (const rol of targetRoles) {
       const ids = await contract.obtenerMenusPorRol(rol.id);

@@ -4,8 +4,10 @@ import { getRedis, isRedisEnabled } from './redis.service.js';
 
 const KEY_PREFIX = 'rbac:idx:v1';
 const META_LAST_BLOCK_KEY = `${KEY_PREFIX}:meta:lastProcessedBlock`;
-/** Listas RBAC por ejecutor: rellenado en upsertRole + backfill único vía obtenerTodosRoles */
+/** Listas RBAC por ejecutor: backfill único vía obtenerTodos* en el indexador */
 const ROLES_LIST_SCHEMA_KEY = `${KEY_PREFIX}:rol:listSchema`;
+const USERS_LIST_SCHEMA_KEY = `${KEY_PREFIX}:user:listSchema`;
+const MENUS_LIST_SCHEMA_KEY = `${KEY_PREFIX}:menu:listSchema`;
 const DEFAULT_CONFIRMATIONS = Number(process.env.INDEXER_CONFIRMATIONS ?? 6);
 const DEFAULT_POLL_MS = Number(process.env.INDEXER_POLL_MS ?? 12000);
 const DEFAULT_BLOCK_CHUNK = Number(process.env.INDEXER_BLOCK_CHUNK ?? 2000);
@@ -45,6 +47,22 @@ function keyRoleAllIds() {
 
 function keyRolesByEjecutor(ejecutorNorm) {
   return `${KEY_PREFIX}:rol:byEjecutor:${ejecutorNorm}`;
+}
+
+function keyUserAllIds() {
+  return `${KEY_PREFIX}:user:allIds`;
+}
+
+function keyUsersByEjecutor(ejecutorNorm) {
+  return `${KEY_PREFIX}:user:byEjecutor:${ejecutorNorm}`;
+}
+
+function keyMenuAllIds() {
+  return `${KEY_PREFIX}:menu:allIds`;
+}
+
+function keyMenusByEjecutor(ejecutorNorm) {
+  return `${KEY_PREFIX}:menu:byEjecutor:${ejecutorNorm}`;
 }
 
 function normAddress(address) {
@@ -108,6 +126,106 @@ async function ensureRolesListSecondaryIndex(contract, redis, logger) {
   }
 }
 
+async function clearUsuarioListSecondaryKeys(redis) {
+  await redis.del(keyUserAllIds());
+  let cursor = '0';
+  const pattern = `${KEY_PREFIX}:user:byEjecutor:*`;
+  do {
+    const [next, keys] = await redis.scan(cursor, 'MATCH', pattern, 'COUNT', 200);
+    cursor = next;
+    if (keys.length) await redis.del(...keys);
+  } while (cursor !== '0');
+}
+
+async function ensureUsuariosListSecondaryIndex(contract, redis, logger) {
+  if (typeof contract.obtenerTodosUsuarios !== 'function') {
+    return;
+  }
+  if ((await redis.get(USERS_LIST_SCHEMA_KEY)) === 'v2') {
+    return;
+  }
+  try {
+    const arr = await contract.obtenerTodosUsuarios();
+    await clearUsuarioListSecondaryKeys(redis);
+    const CHUNK = 80;
+    for (let i = 0; i < arr.length; i += CHUNK) {
+      const slice = arr.slice(i, i + CHUNK);
+      const tx = redis.multi();
+      for (const u of slice) {
+        const id = Number(u.id || 0);
+        if (!id) continue;
+        const row = {
+          id,
+          login: String(u.login || ''),
+          nombre: String(u.nombre || ''),
+          rolId: Number(u.rolId || 0),
+          activo: Boolean(u.activo),
+          timestamp: Number(u.timestamp || 0),
+          ejecutor: String(u.ejecutor || ''),
+        };
+        tx.set(keyUser(id), JSON.stringify(row));
+        const ln = normLogin(row.login);
+        if (ln) tx.set(keyUserByLogin(ln), String(id));
+        tx.sadd(keyUserAllIds(), String(id));
+        const ej = normAddress(row.ejecutor);
+        if (ej) tx.sadd(keyUsersByEjecutor(ej), String(id));
+      }
+      await tx.exec();
+    }
+    await redis.set(USERS_LIST_SCHEMA_KEY, 'v2');
+  } catch (err) {
+    logger?.error({ err }, 'ensureUsuariosListSecondaryIndex falló');
+  }
+}
+
+async function clearMenuListSecondaryKeys(redis) {
+  await redis.del(keyMenuAllIds());
+  let cursor = '0';
+  const pattern = `${KEY_PREFIX}:menu:byEjecutor:*`;
+  do {
+    const [next, keys] = await redis.scan(cursor, 'MATCH', pattern, 'COUNT', 200);
+    cursor = next;
+    if (keys.length) await redis.del(...keys);
+  } while (cursor !== '0');
+}
+
+async function ensureMenusListSecondaryIndex(contract, redis, logger) {
+  if (typeof contract.obtenerTodosMenus !== 'function') {
+    return;
+  }
+  if ((await redis.get(MENUS_LIST_SCHEMA_KEY)) === 'v2') {
+    return;
+  }
+  try {
+    const arr = await contract.obtenerTodosMenus();
+    await clearMenuListSecondaryKeys(redis);
+    const CHUNK = 80;
+    for (let i = 0; i < arr.length; i += CHUNK) {
+      const slice = arr.slice(i, i + CHUNK);
+      const tx = redis.multi();
+      for (const m of slice) {
+        const id = Number(m.id || 0);
+        if (!id) continue;
+        const row = {
+          id,
+          nombre: String(m.nombre || ''),
+          activo: Boolean(m.activo),
+          timestamp: Number(m.timestamp || 0),
+          ejecutor: String(m.ejecutor || ''),
+        };
+        tx.set(keyMenu(id), JSON.stringify(row));
+        tx.sadd(keyMenuAllIds(), String(id));
+        const ej = normAddress(row.ejecutor);
+        if (ej) tx.sadd(keyMenusByEjecutor(ej), String(id));
+      }
+      await tx.exec();
+    }
+    await redis.set(MENUS_LIST_SCHEMA_KEY, 'v2');
+  } catch (err) {
+    logger?.error({ err }, 'ensureMenusListSecondaryIndex falló');
+  }
+}
+
 function isRpcRangeLimitError(err) {
   const message = err instanceof Error ? err.message : String(err);
   return (
@@ -128,16 +246,38 @@ async function upsertUser(contract, redis, userId) {
     nombre: String(u.nombre || ''),
     rolId: Number(u.rolId || 0),
     activo: Boolean(u.activo),
+    timestamp: Number(u.timestamp || 0),
+    ejecutor: String(u.ejecutor || ''),
   };
 
   if (!current.id) {
+    if (prev?.id) {
+      const loginNorm = prev.login ? normLogin(prev.login) : '';
+      const pe = prev.ejecutor ? normAddress(prev.ejecutor) : '';
+      const tx = redis.multi();
+      tx.del(keyUser(userId));
+      if (loginNorm) tx.del(keyUserByLogin(loginNorm));
+      tx.srem(keyUserAllIds(), String(userId));
+      if (pe) tx.srem(keyUsersByEjecutor(pe), String(userId));
+      await tx.exec();
+    }
     return;
   }
 
   const loginNorm = normLogin(current.login);
+  const ejecutorNorm = normAddress(current.ejecutor);
+  const prevEj = prev?.ejecutor ? normAddress(prev.ejecutor) : '';
+
   const tx = redis.multi();
   tx.set(keyUser(userId), JSON.stringify(current));
   if (loginNorm) tx.set(keyUserByLogin(loginNorm), String(userId));
+  tx.sadd(keyUserAllIds(), String(userId));
+  if (prevEj && prevEj !== ejecutorNorm) {
+    tx.srem(keyUsersByEjecutor(prevEj), String(userId));
+  }
+  if (ejecutorNorm) {
+    tx.sadd(keyUsersByEjecutor(ejecutorNorm), String(userId));
+  }
 
   const prevLoginNorm = prev?.login ? normLogin(prev.login) : '';
   if (prevLoginNorm && prevLoginNorm !== loginNorm) {
@@ -187,14 +327,43 @@ async function upsertRole(contract, redis, rolId) {
 }
 
 async function upsertMenu(contract, redis, menuId) {
+  const prevRaw = await redis.get(keyMenu(menuId));
+  const prev = prevRaw ? JSON.parse(prevRaw) : null;
+
   const m = await contract.menus(menuId);
   const current = {
     id: Number(m.id || 0),
     nombre: String(m.nombre || ''),
     activo: Boolean(m.activo),
+    timestamp: Number(m.timestamp || 0),
+    ejecutor: String(m.ejecutor || ''),
   };
-  if (!current.id) return;
-  await redis.set(keyMenu(menuId), JSON.stringify(current));
+
+  if (!current.id) {
+    if (prev?.id) {
+      const pe = prev.ejecutor ? normAddress(prev.ejecutor) : '';
+      const tx = redis.multi();
+      tx.del(keyMenu(menuId));
+      tx.srem(keyMenuAllIds(), String(menuId));
+      if (pe) tx.srem(keyMenusByEjecutor(pe), String(menuId));
+      await tx.exec();
+    }
+    return;
+  }
+
+  const ejecutorNorm = normAddress(current.ejecutor);
+  const prevEj = prev?.ejecutor ? normAddress(prev.ejecutor) : '';
+
+  const tx = redis.multi();
+  tx.set(keyMenu(menuId), JSON.stringify(current));
+  tx.sadd(keyMenuAllIds(), String(menuId));
+  if (prevEj && prevEj !== ejecutorNorm) {
+    tx.srem(keyMenusByEjecutor(prevEj), String(menuId));
+  }
+  if (ejecutorNorm) {
+    tx.sadd(keyMenusByEjecutor(ejecutorNorm), String(menuId));
+  }
+  await tx.exec();
 }
 
 async function rebuildMenusByRole(contract, redis, rolId) {
@@ -266,7 +435,11 @@ async function syncIndexOnce(logger) {
   const provider = getProvider();
   const contract = getContract();
 
-  await ensureRolesListSecondaryIndex(contract, redis, logger);
+  await Promise.all([
+    ensureRolesListSecondaryIndex(contract, redis, logger),
+    ensureUsuariosListSecondaryIndex(contract, redis, logger),
+    ensureMenusListSecondaryIndex(contract, redis, logger),
+  ]);
 
   const latest = await provider.getBlockNumber();
   const safeHead = Math.max(CONTRACT_DEPLOY_BLOCK, latest - DEFAULT_CONFIRMATIONS);
@@ -370,6 +543,139 @@ export async function getIndexedRolesList(accountNorm = '') {
   const filtered = rows.filter((r) => r.id > 0);
   if (!accountNorm) return filtered;
   return filtered.filter((r) => normAddress(r.ejecutor) === accountNorm);
+}
+
+/**
+ * @param {string} accountNorm
+ * @returns {Promise<null | Array<{ id: number, login: string, nombre: string, rolId: number, activo: boolean, timestamp: number, ejecutor: string }>>}
+ */
+export async function getIndexedUsuariosList(accountNorm = '') {
+  if (!isRedisEnabled()) return null;
+  const redis = getRedis();
+  if ((await redis.get(USERS_LIST_SCHEMA_KEY)) !== 'v2') {
+    return null;
+  }
+
+  let ids;
+  if (accountNorm) {
+    ids = await redis.smembers(keyUsersByEjecutor(accountNorm));
+  } else {
+    ids = await redis.smembers(keyUserAllIds());
+  }
+  if (!ids.length) {
+    return [];
+  }
+
+  const numericIds = [...new Set(ids.map((id) => Number(id)))].filter((n) => Number.isFinite(n) && n > 0);
+  const keys = numericIds.map((id) => keyUser(id));
+  const vals = await redis.mget(keys);
+  /** @type {Array<{ id: number, login: string, nombre: string, rolId: number, activo: boolean, timestamp: number, ejecutor: string }>} */
+  const rows = [];
+  for (const raw of vals) {
+    if (!raw) continue;
+    try {
+      const o = JSON.parse(raw);
+      rows.push({
+        id: Number(o.id),
+        login: String(o.login || ''),
+        nombre: String(o.nombre || ''),
+        rolId: Number(o.rolId || 0),
+        activo: Boolean(o.activo),
+        timestamp: Number(o.timestamp || 0),
+        ejecutor: String(o.ejecutor || ''),
+      });
+    } catch {
+      // ignorar
+    }
+  }
+  rows.sort((a, b) => a.id - b.id);
+  const filtered = rows.filter((u) => u.id > 0);
+  if (!accountNorm) return filtered;
+  return filtered.filter((u) => normAddress(u.ejecutor) === accountNorm);
+}
+
+/**
+ * @param {string} accountNorm
+ * @returns {Promise<null | Array<{ id: number, nombre: string, activo: boolean, timestamp: number, ejecutor: string }>>}
+ */
+export async function getIndexedMenusList(accountNorm = '') {
+  if (!isRedisEnabled()) return null;
+  const redis = getRedis();
+  if ((await redis.get(MENUS_LIST_SCHEMA_KEY)) !== 'v2') {
+    return null;
+  }
+
+  let ids;
+  if (accountNorm) {
+    ids = await redis.smembers(keyMenusByEjecutor(accountNorm));
+  } else {
+    ids = await redis.smembers(keyMenuAllIds());
+  }
+  if (!ids.length) {
+    return [];
+  }
+
+  const numericIds = [...new Set(ids.map((id) => Number(id)))].filter((n) => Number.isFinite(n) && n > 0);
+  const keys = numericIds.map((id) => keyMenu(id));
+  const vals = await redis.mget(keys);
+  /** @type {Array<{ id: number, nombre: string, activo: boolean, timestamp: number, ejecutor: string }>} */
+  const rows = [];
+  for (const raw of vals) {
+    if (!raw) continue;
+    try {
+      const o = JSON.parse(raw);
+      rows.push({
+        id: Number(o.id),
+        nombre: String(o.nombre || ''),
+        activo: Boolean(o.activo),
+        timestamp: Number(o.timestamp || 0),
+        ejecutor: String(o.ejecutor || ''),
+      });
+    } catch {
+      // ignorar
+    }
+  }
+  rows.sort((a, b) => a.id - b.id);
+  const filtered = rows.filter((m) => m.id > 0);
+  if (!accountNorm) return filtered;
+  return filtered.filter((m) => normAddress(m.ejecutor) === accountNorm);
+}
+
+/**
+ * Vínculos rol → menús desde Redis (sin listRoles ni obtenerMenusPorRol por petición).
+ * @param {number} rolFilter 0 = todos los roles
+ * @returns {Promise<null | Array<{ rolId: number, menuIds: number[] }>>}
+ */
+export async function getIndexedVinculosList(rolFilter = 0) {
+  if (!isRedisEnabled()) return null;
+  const redis = getRedis();
+  if ((await redis.get(ROLES_LIST_SCHEMA_KEY)) !== 'v2') {
+    return null;
+  }
+
+  const rf = Number(rolFilter || 0);
+  /** @type {string[]} */
+  let roleIds;
+  if (rf > 0) {
+    const exists = await redis.exists(keyRole(rf));
+    roleIds = exists ? [String(rf)] : [];
+  } else {
+    roleIds = await redis.smembers(keyRoleAllIds());
+  }
+
+  const numericRoleIds = [...new Set(roleIds.map((id) => Number(id)))].filter((n) => Number.isFinite(n) && n > 0);
+  /** @type {Array<{ rolId: number, menuIds: number[] }>} */
+  const rows = [];
+  for (const rid of numericRoleIds) {
+    const menuIdStrs = await redis.smembers(keyMenusByRole(rid));
+    const menuIds = menuIdStrs
+      .map((s) => Number(s))
+      .filter((n) => Number.isFinite(n) && n > 0)
+      .sort((a, b) => a - b);
+    rows.push({ rolId: rid, menuIds });
+  }
+  rows.sort((a, b) => a.rolId - b.rolId);
+  return rows;
 }
 
 export async function getIndexedPermissionsTree(login) {
