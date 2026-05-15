@@ -1,5 +1,11 @@
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
+/** Query `?account=` para lecturas RBAC acotadas a la wallet conectada. */
+export function rbacAccountQuery(account: string | null | undefined): string {
+  if (!account?.trim()) return '';
+  return `?account=${encodeURIComponent(account.trim())}`;
+}
+
 export async function apiGet(path: string) {
   const res = await fetch(`${API_URL}${path}`, {
     method: 'GET',

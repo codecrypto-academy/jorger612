@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import { Usuario } from '@/types';
 import { getSignedContract, parseContractError } from '@/lib/contract';
 import { useWallet } from '@/context/WalletContext';
-import { apiGet, apiPost } from '@/lib/api';
+import { apiGet, apiPost, rbacAccountQuery } from '@/lib/api';
 
 export function useUsuarios() {
   const { account } = useWallet();
@@ -17,8 +17,7 @@ export function useUsuarios() {
     setLoading(true);
     setError(null);
     try {
-      const query = account ? `?account=${encodeURIComponent(account)}` : '';
-      const data = await apiGet(`/rbac/usuarios${query}`);
+      const data = await apiGet(`/rbac/usuarios${rbacAccountQuery(account)}`);
       setUsuarios((data.items ?? []) as Usuario[]);
     } catch (err) {
       setError(parseContractError(err));
@@ -31,8 +30,10 @@ export function useUsuarios() {
     if (!account) {
       setUsuarios([]);
       setError(null);
+      return;
     }
-  }, [account]);
+    void fetchUsuarios();
+  }, [account, fetchUsuarios]);
 
   const crearUsuario = useCallback(async (signer: ethers.Signer, login: string, nombre: string, rolId: number) => {
     const contract = getSignedContract(signer);

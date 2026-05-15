@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import { Rol } from '@/types';
 import { getSignedContract, parseContractError } from '@/lib/contract';
 import { useWallet } from '@/context/WalletContext';
-import { apiGet, apiPost } from '@/lib/api';
+import { apiGet, apiPost, rbacAccountQuery } from '@/lib/api';
 
 export function useRoles() {
   const { account } = useWallet();
@@ -17,8 +17,7 @@ export function useRoles() {
     setLoading(true);
     setError(null);
     try {
-      const query = account ? `?account=${encodeURIComponent(account)}` : '';
-      const data = await apiGet(`/rbac/roles${query}`);
+      const data = await apiGet(`/rbac/roles${rbacAccountQuery(account)}`);
       setRoles((data.items ?? []) as Rol[]);
     } catch (err) {
       setError(parseContractError(err));
@@ -31,8 +30,10 @@ export function useRoles() {
     if (!account) {
       setRoles([]);
       setError(null);
+      return;
     }
-  }, [account]);
+    void fetchRoles();
+  }, [account, fetchRoles]);
 
   const crearRol = useCallback(async (signer: ethers.Signer, nombre: string) => {
     const contract = getSignedContract(signer);

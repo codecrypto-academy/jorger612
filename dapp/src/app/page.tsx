@@ -17,7 +17,7 @@ import { RbacLanding } from '@/components/landing/RbacLanding';
 export default function DashboardPage() {
   const { isConnected, account, isOwner } = useWallet();
   const { isAuthorized, loading: authLoading } = useIsCuentaAutorizada(account);
-  const { loading, error, errorLevel, roles, actividad, stats, refresh } = useDashboardData(isConnected);
+  const { loading, error, errorLevel, roles, actividad, stats, refresh } = useDashboardData(account);
 
   if (!isConnected) return <RbacLanding />;
 

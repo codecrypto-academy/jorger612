@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import { Menu } from '@/types';
 import { getReadOnlyContract, getSignedContract, parseContractError } from '@/lib/contract';
 import { useWallet } from '@/context/WalletContext';
-import { apiGet, apiPost } from '@/lib/api';
+import { apiGet, apiPost, rbacAccountQuery } from '@/lib/api';
 
 export function useMenus() {
   const { account } = useWallet();
@@ -18,8 +18,7 @@ export function useMenus() {
     setLoading(true);
     setError(null);
     try {
-      const query = account ? `?account=${encodeURIComponent(account)}` : '';
-      const data = await apiGet(`/rbac/menus${query}`);
+      const data = await apiGet(`/rbac/menus${rbacAccountQuery(account)}`);
       setMenus((data.items ?? []) as Menu[]);
     } catch (err) {
       setError(parseContractError(err));
@@ -32,8 +31,11 @@ export function useMenus() {
     if (!account) {
       setMenus([]);
       setError(null);
+      accessMapCacheRef.current.clear();
+      return;
     }
-  }, [account]);
+    void fetchMenus();
+  }, [account, fetchMenus]);
 
   const crearMenu = useCallback(async (signer: ethers.Signer, nombre: string) => {
     const contract = getSignedContract(signer);

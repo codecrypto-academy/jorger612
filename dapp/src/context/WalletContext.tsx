@@ -195,8 +195,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     if (!eth) return;
 
     /**
-     * Si cambia la cuenta activa en MetaMask, cerramos sesión en la dapp para no mezclar permisos ni datos.
-     * No desconectar cuando el evento repite la misma cuenta (p. ej. justo tras conectar).
+     * Si cambia la cuenta activa en MetaMask, re-vincula la sesión (los hooks recargan datos por `account`).
+     * No actuar cuando el evento repite la misma cuenta (p. ej. justo tras conectar).
      */
     const handleAccountsChanged = (...args: unknown[]) => {
       const accounts = args[0] as string[] | undefined;
@@ -207,7 +207,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       const next = accounts[0];
       const prev = accountRef.current;
       if (prev && prev.toLowerCase() !== next.toLowerCase()) {
-        disconnect();
+        void bindWallet(eth, accounts);
       }
     };
 
@@ -239,7 +239,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           if (!nextEth) return;
           const accts = (await nextEth.request({ method: 'eth_accounts' })) as string[];
           const next = accts[0];
-          if (next && prev.toLowerCase() !== next.toLowerCase()) disconnect();
+          if (next && prev.toLowerCase() !== next.toLowerCase()) {
+            void bindWallet(nextEth, [next]);
+          }
         } catch {
           /* ignorar */
         }

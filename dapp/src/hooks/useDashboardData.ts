@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { ethers } from 'ethers';
-import { apiGet } from '@/lib/api';
-import { RPC_URL } from '@/lib/contract';
+import { apiGet, rbacAccountQuery } from '@/lib/api';
 import { Rol, Usuario, Menu } from '@/types';
 
 export interface ActividadItem {
@@ -44,38 +42,55 @@ export interface DashboardStats {
   lastFetchAt: number | null;
 }
 
-export function useDashboardData(enabled: boolean) {
+const INITIAL_STATS: DashboardStats = {
+  rolesActivos: 0,
+  rolesInactivos: 0,
+  usuariosTotal: 0,
+  vinculosMenuRol: 0,
+  menusActivos: 0,
+  menusTotal: 0,
+  lastBlock: null,
+  lastBlockAgoSec: null,
+  networkSynced: false,
+  indexer: null,
+  lastFetchAt: null,
+};
+
+function sameAddress(a: string | null | undefined, b: string | null | undefined): boolean {
+  if (!a || !b) return false;
+  return a.toLowerCase() === b.toLowerCase();
+}
+
+export function useDashboardData(account: string | null) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorLevel, setErrorLevel] = useState<'error' | 'warning' | null>(null);
   const [roles, setRoles] = useState<RolDashboardRow[]>([]);
   const [actividad, setActividad] = useState<ActividadItem[]>([]);
-  const [stats, setStats] = useState<DashboardStats>({
-    rolesActivos: 0,
-    rolesInactivos: 0,
-    usuariosTotal: 0,
-    vinculosMenuRol: 0,
-    menusActivos: 0,
-    menusTotal: 0,
-    lastBlock: null,
-    lastBlockAgoSec: null,
-    networkSynced: false,
-    indexer: null,
-    lastFetchAt: null,
-  });
+  const [stats, setStats] = useState<DashboardStats>(INITIAL_STATS);
   const blockFetchedAt = useRef<number | null>(null);
 
+  const clearData = useCallback(() => {
+    setRoles([]);
+    setActividad([]);
+    setStats(INITIAL_STATS);
+    setError(null);
+    setErrorLevel(null);
+    blockFetchedAt.current = null;
+  }, []);
+
   const refresh = useCallback(async () => {
-    if (!enabled) return;
+    if (!account) return;
     setLoading(true);
     setError(null);
     setErrorLevel(null);
+    const q = rbacAccountQuery(account);
     try {
       const [rolesSettled, usuariosSettled, menusSettled, vinculosSettled, actividadSettled, healthSettled] =
         await Promise.allSettled([
-          apiGet('/rbac/roles'),
-          apiGet('/rbac/usuarios'),
-          apiGet('/rbac/menus'),
+          apiGet(`/rbac/roles${q}`),
+          apiGet(`/rbac/usuarios${q}`),
+          apiGet(`/rbac/menus${q}`),
           apiGet('/rbac/vinculos'),
           apiGet('/rbac/actividad-reciente?limit=8'),
           apiGet('/health'),
@@ -104,7 +119,9 @@ export function useDashboardData(enabled: boolean) {
       const rolesList = (rolesRes.items ?? []) as Rol[];
       const usuariosList = (usuariosRes.items ?? []) as Usuario[];
       const menusList = (menusRes.items ?? []) as Menu[];
-      const vinculosList = (vinculosRes.items ?? []) as { rolId: number; menuIds: number[] }[];
+      const vinculosAll = (vinculosRes.items ?? []) as { rolId: number; menuIds: number[] }[];
+      const rolIds = new Set(rolesList.map((r) => r.id));
+      const vinculosList = vinculosAll.filter((v) => rolIds.has(v.rolId));
 
       const usuariosPorRol = new Map<number, number>();
       for (const u of usuariosList) {
@@ -127,7 +144,9 @@ export function useDashboardData(enabled: boolean) {
       }));
       rows.sort((a, b) => a.id - b.id);
       setRoles(rows);
-      setActividad((actividadRes?.items ?? []) as ActividadItem[]);
+
+      const actividadRaw = (actividadRes?.items ?? []) as ActividadItem[];
+      setActividad(actividadRaw.filter((ev) => sameAddress(ev.ejecutor, account)));
 
       if (actividadSettled.status === 'rejected') {
         const msg =
@@ -141,22 +160,16 @@ export function useDashboardData(enabled: boolean) {
         setErrorLevel(null);
       }
 
-      let lastBlock: number | null = null;
-      try {
-        const provider = new ethers.JsonRpcProvider(RPC_URL);
-        lastBlock = await provider.getBlockNumber();
-        blockFetchedAt.current = Date.now();
-      } catch {
-        const idx = healthRes?.indexer as HealthIndexer | undefined;
-        if (idx?.latestBlock != null) {
-          lastBlock = Number(idx.latestBlock);
-          blockFetchedAt.current = Date.now();
-        }
-      }
-
       const indexer = (healthRes?.indexer ?? null) as HealthIndexer | null;
       const lag = indexer?.lag != null ? Number(indexer.lag) : null;
       const synced = lag === 0 || (lag != null && lag <= 12);
+      const lastBlock =
+        indexer?.latestBlock != null && Number.isFinite(Number(indexer.latestBlock))
+          ? Number(indexer.latestBlock)
+          : null;
+      if (lastBlock != null) {
+        blockFetchedAt.current = Date.now();
+      }
 
       setStats({
         rolesActivos: rolesList.filter((r) => r.activo).length,
@@ -177,14 +190,19 @@ export function useDashboardData(enabled: boolean) {
     } finally {
       setLoading(false);
     }
-  }, [enabled]);
+  }, [account]);
 
   useEffect(() => {
-    if (enabled) void refresh();
-  }, [enabled, refresh]);
+    if (!account) {
+      clearData();
+      return;
+    }
+    clearData();
+    void refresh();
+  }, [account, clearData, refresh]);
 
   useEffect(() => {
-    if (!enabled || stats.lastBlock == null) return;
+    if (!account || stats.lastBlock == null) return;
     const t = setInterval(() => {
       if (blockFetchedAt.current) {
         setStats((s) => ({
@@ -194,13 +212,13 @@ export function useDashboardData(enabled: boolean) {
       }
     }, 5000);
     return () => clearInterval(t);
-  }, [enabled, stats.lastBlock, stats.lastFetchAt]);
+  }, [account, stats.lastBlock, stats.lastFetchAt]);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!account) return;
     const poll = setInterval(() => void refresh(), 30000);
     return () => clearInterval(poll);
-  }, [enabled, refresh]);
+  }, [account, refresh]);
 
   return { loading, error, errorLevel, roles, actividad, stats, refresh };
 }
