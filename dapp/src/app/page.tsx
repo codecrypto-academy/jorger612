@@ -68,7 +68,7 @@ function WelcomeCard() {
 export default function DashboardPage() {
   const { isConnected, account, isOwner } = useWallet();
   const { isAuthorized, loading: authLoading } = useIsCuentaAutorizada(account);
-  const { loading, error, roles, actividad, stats, refresh } = useDashboardData(isConnected);
+  const { loading, error, errorLevel, roles, actividad, stats, refresh } = useDashboardData(isConnected);
 
   if (!isConnected) return <WelcomeCard />;
 
@@ -96,7 +96,11 @@ export default function DashboardPage() {
       </div>
 
       {error && (
-        <div className="ds-alert ds-alert--danger" role="alert" style={{ marginBottom: 16 }}>
+        <div
+          className={`ds-alert ${errorLevel === 'warning' ? 'ds-alert--warning' : 'ds-alert--danger'}`}
+          role="alert"
+          style={{ marginBottom: 16 }}
+        >
           {error}
         </div>
       )}

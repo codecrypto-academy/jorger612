@@ -47,6 +47,7 @@ export interface DashboardStats {
 export function useDashboardData(enabled: boolean) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorLevel, setErrorLevel] = useState<'error' | 'warning' | null>(null);
   const [roles, setRoles] = useState<RolDashboardRow[]>([]);
   const [actividad, setActividad] = useState<ActividadItem[]>([]);
   const [stats, setStats] = useState<DashboardStats>({
@@ -68,15 +69,37 @@ export function useDashboardData(enabled: boolean) {
     if (!enabled) return;
     setLoading(true);
     setError(null);
+    setErrorLevel(null);
     try {
-      const [rolesRes, usuariosRes, menusRes, vinculosRes, actividadRes, healthRes] = await Promise.all([
-        apiGet('/rbac/roles'),
-        apiGet('/rbac/usuarios'),
-        apiGet('/rbac/menus'),
-        apiGet('/rbac/vinculos'),
-        apiGet('/rbac/actividad-reciente?limit=8'),
-        apiGet('/health'),
-      ]);
+      const [rolesSettled, usuariosSettled, menusSettled, vinculosSettled, actividadSettled, healthSettled] =
+        await Promise.allSettled([
+          apiGet('/rbac/roles'),
+          apiGet('/rbac/usuarios'),
+          apiGet('/rbac/menus'),
+          apiGet('/rbac/vinculos'),
+          apiGet('/rbac/actividad-reciente?limit=8'),
+          apiGet('/health'),
+        ]);
+
+      const coreErrors: string[] = [];
+      const unwrap = <T,>(result: PromiseSettledResult<T>, label: string): T | null => {
+        if (result.status === 'fulfilled') return result.value;
+        coreErrors.push(`${label}: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`);
+        return null;
+      };
+
+      const rolesRes = unwrap(rolesSettled, 'roles');
+      const usuariosRes = unwrap(usuariosSettled, 'usuarios');
+      const menusRes = unwrap(menusSettled, 'menus');
+      const vinculosRes = unwrap(vinculosSettled, 'vinculos');
+      const actividadRes = actividadSettled.status === 'fulfilled' ? actividadSettled.value : null;
+      const healthRes = healthSettled.status === 'fulfilled' ? healthSettled.value : null;
+
+      if (!rolesRes || !usuariosRes || !menusRes || !vinculosRes) {
+        setError(coreErrors.join(' · ') || 'No se pudieron cargar los datos RBAC desde la API');
+        setErrorLevel('error');
+        return;
+      }
 
       const rolesList = (rolesRes.items ?? []) as Rol[];
       const usuariosList = (usuariosRes.items ?? []) as Usuario[];
@@ -104,7 +127,19 @@ export function useDashboardData(enabled: boolean) {
       }));
       rows.sort((a, b) => a.id - b.id);
       setRoles(rows);
-      setActividad((actividadRes.items ?? []) as ActividadItem[]);
+      setActividad((actividadRes?.items ?? []) as ActividadItem[]);
+
+      if (actividadSettled.status === 'rejected') {
+        const msg =
+          actividadSettled.reason instanceof Error ? actividadSettled.reason.message : 'actividad-reciente';
+        setError(
+          `Actividad reciente no disponible (${msg}). Reconstruye el contenedor api en el servidor.`,
+        );
+        setErrorLevel('warning');
+      } else {
+        setError(null);
+        setErrorLevel(null);
+      }
 
       let lastBlock: number | null = null;
       try {
@@ -138,6 +173,7 @@ export function useDashboardData(enabled: boolean) {
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar el panel');
+      setErrorLevel('error');
     } finally {
       setLoading(false);
     }
@@ -166,5 +202,5 @@ export function useDashboardData(enabled: boolean) {
     return () => clearInterval(poll);
   }, [enabled, refresh]);
 
-  return { loading, error, roles, actividad, stats, refresh };
+  return { loading, error, errorLevel, roles, actividad, stats, refresh };
 }
