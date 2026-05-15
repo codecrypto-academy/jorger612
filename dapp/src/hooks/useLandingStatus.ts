@@ -1,9 +1,22 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ethers } from 'ethers';
+import { apiGet } from '@/lib/api';
 import { NETWORK_NAME } from '@/lib/config';
-import { RPC_URL } from '@/lib/contract';
+
+interface HealthIndexer {
+  enabled?: boolean;
+  running?: boolean;
+  syncedToBlock?: number | null;
+  latestBlock?: number;
+  lag?: number | null;
+  lastError?: string | null;
+}
+
+interface HealthResponse {
+  status?: string;
+  indexer?: HealthIndexer;
+}
 
 export interface LandingStatus {
   networkName: string;
@@ -23,6 +36,14 @@ function formatAgo(sec: number): string {
   return `Hace ${h} h`;
 }
 
+function friendlyError(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (/failed to fetch|networkerror|load failed/i.test(msg)) {
+    return 'No se pudo contactar la API. Comprueba que el servicio esté en marcha.';
+  }
+  return msg || 'No se pudo leer el estado del sistema';
+}
+
 export function useLandingStatus(enabled: boolean) {
   const [status, setStatus] = useState<LandingStatus>({
     networkName: NETWORK_NAME,
@@ -38,25 +59,35 @@ export function useLandingStatus(enabled: boolean) {
     if (!enabled) return;
     setStatus((s) => ({ ...s, loading: true, error: null }));
     try {
-      const provider = new ethers.JsonRpcProvider(RPC_URL);
-      const block = await provider.getBlockNumber();
+      const health = (await apiGet('/health')) as HealthResponse;
+      const indexer = health.indexer;
+      const block =
+        indexer?.latestBlock != null && Number.isFinite(Number(indexer.latestBlock))
+          ? Number(indexer.latestBlock)
+          : null;
       const now = Date.now();
+      const operational = health.status === 'ok' && block != null;
+      const indexerError = indexer?.lastError?.trim() || null;
+
       setStatus({
         networkName: NETWORK_NAME,
         lastBlock: block,
-        lastFetchAt: now,
-        agoLabel: 'Hace 0 s',
-        operational: true,
+        lastFetchAt: operational ? now : null,
+        agoLabel: operational ? 'Hace 0 s' : '—',
+        operational,
         loading: false,
-        error: null,
+        error: operational ? null : indexerError,
       });
     } catch (err) {
-      setStatus((s) => ({
-        ...s,
+      setStatus({
+        networkName: NETWORK_NAME,
+        lastBlock: null,
+        lastFetchAt: null,
+        agoLabel: '—',
         operational: false,
         loading: false,
-        error: err instanceof Error ? err.message : 'No se pudo leer la red',
-      }));
+        error: friendlyError(err),
+      });
     }
   }, [enabled]);
 

@@ -22,7 +22,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (isLanding) {
     return (
       <div className={`ds-landing${isHomeLanding ? ' ds-landing--rbac' : ''}`}>
-        <Navbar variant="light" onMenuClick={() => {}} />
+        <Navbar variant="light" onMenuClick={() => {}} hideWalletButton={isHomeLanding} />
         <main className="ds-landing__main">{children}</main>
       </div>
     );

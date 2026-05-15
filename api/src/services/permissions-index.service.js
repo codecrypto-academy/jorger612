@@ -1055,11 +1055,21 @@ export async function getIndexedPermissionsTree(login) {
 }
 
 export async function getIndexerStatus() {
-  if (!isRedisEnabled()) {
-    return { enabled: false, running: false };
-  }
   const provider = getProvider();
-  const latest = await provider.getBlockNumber();
+  let latest;
+  try {
+    latest = await provider.getBlockNumber();
+  } catch (err) {
+    return {
+      enabled: isRedisEnabled(),
+      running: false,
+      latestBlock: null,
+      lastError: err?.message ?? String(err),
+    };
+  }
+  if (!isRedisEnabled()) {
+    return { enabled: false, running: false, latestBlock: latest, lag: null };
+  }
   return {
     enabled: true,
     running,

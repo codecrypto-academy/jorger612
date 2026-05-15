@@ -21,9 +21,11 @@ const TITLES: Record<string, { title: string; subtitle: string }> = {
 interface NavbarProps {
   onMenuClick?: () => void;
   variant?: 'dark' | 'light';
+  /** Oculta Conectar Wallet (p. ej. landing RBAC con CTA en tarjeta). */
+  hideWalletButton?: boolean;
 }
 
-export function Navbar({ onMenuClick, variant = 'dark' }: NavbarProps) {
+export function Navbar({ onMenuClick, variant = 'dark', hideWalletButton = false }: NavbarProps) {
   const pathname = usePathname();
   const { isConnected } = useWallet();
   const landing = variant === 'light' && pathname !== '/';
@@ -69,7 +71,9 @@ export function Navbar({ onMenuClick, variant = 'dark' }: NavbarProps) {
             {NETWORK_NAME} · Conectado
           </span>
         )}
-        <WalletButton variant={landing || isMarket ? 'landing' : 'default'} />
+        {!hideWalletButton && (
+          <WalletButton variant={landing || isMarket ? 'landing' : 'default'} />
+        )}
       </div>
     </header>
   );
