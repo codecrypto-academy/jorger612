@@ -4,6 +4,7 @@ import { createContext, useContext, ReactNode } from 'react';
 import { useWallet } from '@/context/WalletContext';
 import { usePortalAuth, type PortalAuthPhase } from '@/hooks/usePortalAuth';
 import { PortalPasswordModal } from '@/components/portal/PortalPasswordModal';
+import { PortalLockoutModal } from '@/components/portal/PortalLockoutModal';
 import { PortalWelcomeModal } from '@/components/portal/PortalWelcomeModal';
 
 interface PortalAuthContextValue {
@@ -35,6 +36,7 @@ export function PortalAuthProvider({
     portalReady,
     login,
     dismissWelcome,
+    handleLockExpired,
   } = usePortalAuth(account, enabled);
 
   let content: ReactNode = children;
@@ -48,6 +50,14 @@ export function PortalAuthProvider({
           </div>
         </div>
       );
+    } else if (phase === 'locked' && status?.lockedUntil) {
+      content = (
+        <PortalLockoutModal
+          walletAddress={account}
+          lockedUntil={status.lockedUntil}
+          onExpired={handleLockExpired}
+        />
+      );
     } else if (phase === 'needs_password') {
       content = (
         <PortalPasswordModal
@@ -55,6 +65,8 @@ export function PortalAuthProvider({
           displayName={status?.displayName}
           loading={loginLoading}
           error={loginError}
+          remainingAttempts={status?.remainingAttempts}
+          maxAttempts={status?.maxAttempts}
           onSubmit={login}
         />
       );

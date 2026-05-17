@@ -10,6 +10,8 @@ interface PortalPasswordModalProps {
   displayName?: string;
   loading: boolean;
   error: string | null;
+  remainingAttempts?: number;
+  maxAttempts?: number;
   onSubmit: (password: string) => Promise<boolean>;
 }
 
@@ -18,6 +20,8 @@ export function PortalPasswordModal({
   displayName,
   loading,
   error,
+  remainingAttempts,
+  maxAttempts = 3,
   onSubmit,
 }: PortalPasswordModalProps) {
   const [password, setPassword] = useState('');
@@ -48,6 +52,12 @@ export function PortalPasswordModal({
           {displayName ? `Hola ${displayName}, ` : ''}
           ingrese la clave asociada a su wallet para continuar.
         </p>
+        {typeof remainingAttempts === 'number' && remainingAttempts < maxAttempts && (
+          <p className="ds-portal-modal__hint">
+            Intentos restantes antes del bloqueo de 1 h:{' '}
+            <strong>{remainingAttempts}</strong> de {maxAttempts}.
+          </p>
+        )}
 
         <div className="ds-field" style={{ marginBottom: 16 }}>
           <label className="ds-label">Wallet conectada</label>

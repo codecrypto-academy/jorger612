@@ -171,7 +171,7 @@ Content-Type: application/json
 ### Estado: ¿requiere login en portal?
 GET {{baseUrl}}/market/portal-auth/status?wallet={{wallet}}
 
-### Validar wallet + clave
+### Validar wallet + clave (máx. 3 fallos → bloqueo 1 h + correo por intento)
 @portalPassword = MiClaveSegura1
 POST {{baseUrl}}/market/portal-auth/login
 Content-Type: application/json

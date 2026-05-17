@@ -13,6 +13,7 @@ export type PortalAuthPhase =
   | 'idle'
   | 'checking'
   | 'needs_password'
+  | 'locked'
   | 'authenticated'
   | 'no_portal_account';
 
@@ -22,6 +23,10 @@ export interface PortalAuthStatus {
   requiresPortalLogin: boolean;
   displayName: string;
   email: string;
+  isLocked: boolean;
+  lockedUntil: string | null;
+  remainingAttempts: number;
+  maxAttempts: number;
 }
 
 export function usePortalAuth(account: string | null, enabled: boolean) {
@@ -47,6 +52,10 @@ export function usePortalAuth(account: string | null, enabled: boolean) {
         requiresPortalLogin: true,
         displayName: session?.displayName ?? '',
         email: '',
+        isLocked: false,
+        lockedUntil: null,
+        remainingAttempts: 3,
+        maxAttempts: 3,
       });
       setPhase('authenticated');
       return;
@@ -63,10 +72,17 @@ export function usePortalAuth(account: string | null, enabled: boolean) {
         requiresPortalLogin: Boolean(data.requiresPortalLogin),
         displayName: typeof data.displayName === 'string' ? data.displayName : '',
         email: typeof data.email === 'string' ? data.email : '',
+        isLocked: Boolean(data.isLocked),
+        lockedUntil: typeof data.lockedUntil === 'string' ? data.lockedUntil : null,
+        remainingAttempts:
+          typeof data.remainingAttempts === 'number' ? data.remainingAttempts : 3,
+        maxAttempts: typeof data.maxAttempts === 'number' ? data.maxAttempts : 3,
       };
       setStatus(next);
 
-      if (next.requiresPortalLogin) {
+      if (next.requiresPortalLogin && next.isLocked && next.lockedUntil) {
+        setPhase('locked');
+      } else if (next.requiresPortalLogin) {
         setPhase('needs_password');
       } else {
         setPhase('no_portal_account');
@@ -105,7 +121,26 @@ export function usePortalAuth(account: string | null, enabled: boolean) {
         );
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          setLoginError(typeof data.message === 'string' ? data.message : 'Clave incorrecta.');
+          if (data.error === 'account_locked' && typeof data.lockedUntil === 'string') {
+            setStatus((s) =>
+              s
+                ? {
+                    ...s,
+                    isLocked: true,
+                    lockedUntil: data.lockedUntil,
+                    remainingAttempts: 0,
+                  }
+                : s,
+            );
+            setPhase('locked');
+            setLoginError(null);
+            return false;
+          }
+          const msg = typeof data.message === 'string' ? data.message : 'Clave incorrecta.';
+          setLoginError(msg);
+          if (typeof data.remainingAttempts === 'number') {
+            setStatus((s) => (s ? { ...s, remainingAttempts: data.remainingAttempts } : s));
+          }
           return false;
         }
         writePortalAuthSession({
@@ -119,6 +154,10 @@ export function usePortalAuth(account: string | null, enabled: boolean) {
           requiresPortalLogin: true,
           displayName: typeof data.nombreApellido === 'string' ? data.nombreApellido : s?.displayName ?? '',
           email: typeof data.email === 'string' ? data.email : s?.email ?? '',
+          isLocked: false,
+          lockedUntil: null,
+          remainingAttempts: 3,
+          maxAttempts: s?.maxAttempts ?? 3,
         }));
         setPhase('authenticated');
         setShowWelcome(true);
@@ -144,6 +183,10 @@ export function usePortalAuth(account: string | null, enabled: boolean) {
     phase === 'no_portal_account' ||
     (status !== null && !status.requiresPortalLogin);
 
+  const handleLockExpired = useCallback(() => {
+    void refreshStatus();
+  }, [refreshStatus]);
+
   return {
     phase,
     status,
@@ -154,5 +197,6 @@ export function usePortalAuth(account: string | null, enabled: boolean) {
     login,
     dismissWelcome,
     refreshStatus,
+    handleLockExpired,
   };
 }

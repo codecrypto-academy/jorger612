@@ -64,3 +64,65 @@ export async function sendPasswordSetupEmail({ to, walletAddress, setupToken, no
     return { sent: false, error: err instanceof Error ? err.message : String(err) };
   }
 }
+
+/**
+ * Alerta por intento fallido de acceso al portal.
+ * @returns {Promise<{ sent: boolean, error?: string }>}
+ */
+export async function sendPortalLoginFailedEmail({
+  to,
+  walletAddress,
+  nombreApellido,
+  attemptNumber,
+  maxAttempts,
+  accountLocked,
+  lockedUntil,
+}) {
+  const resend = getResendClient();
+  if (!resend) {
+    return { sent: false, error: 'RESEND_API_KEY no configurada' };
+  }
+
+  const greeting = nombreApellido ? `Hola ${nombreApellido},` : 'Hola,';
+  const shortWallet = `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}`;
+  const lockNote = accountLocked && lockedUntil
+    ? `<p style="margin-top: 16px; padding: 12px 14px; background: #fef2f2; border-radius: 8px; color: #991b1b; font-size: 14px;">
+        Tras ${maxAttempts} intentos fallidos, el acceso al portal quedó <strong>bloqueado durante 1 hora</strong>
+        (hasta aprox. ${lockedUntil.toLocaleString('es-ES', { timeZone: 'UTC' })} UTC).
+        Si no fuiste tú, cambia tu clave cuando puedas volver a entrar.
+      </p>`
+    : `<p style="font-size: 13px; color: #64748b;">
+        Te quedan ${Math.max(0, maxAttempts - attemptNumber)} intento(s) antes de un bloqueo de 1 hora.
+      </p>`;
+
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 560px; line-height: 1.6; color: #1e293b;">
+      <p>${greeting}</p>
+      <p>Detectamos un <strong>intento fallido de acceso</strong> al Centro de Control RBAC con la wallet <code>${shortWallet}</code>.</p>
+      <p style="font-size: 14px;">Intento fallido <strong>${attemptNumber}</strong> de ${maxAttempts}.</p>
+      ${lockNote}
+      <p style="font-size: 12px; color: #94a3b8; margin-top: 20px;">
+        Si no reconoces esta actividad, ignora este mensaje solo si estás seguro de que nadie más tiene acceso a tu wallet y correo.
+      </p>
+    </div>
+  `;
+
+  const subject = accountLocked
+    ? 'Acceso al portal bloqueado — RBAC'
+    : `Intento de acceso fallido (${attemptNumber}/${maxAttempts}) — RBAC`;
+
+  try {
+    const { error } = await resend.emails.send({
+      from: getFromAddress(),
+      to: [to],
+      subject,
+      html,
+    });
+    if (error) {
+      return { sent: false, error: error.message || String(error) };
+    }
+    return { sent: true };
+  } catch (err) {
+    return { sent: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
