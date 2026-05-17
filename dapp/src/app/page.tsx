@@ -5,6 +5,7 @@ import { useWallet } from '@/context/WalletContext';
 import { useIsCuentaAutorizada } from '@/hooks/useIsCuentaAutorizada';
 import { AlertaCuentaNoAutorizada } from '@/components/ui/AlertaCuentaNoAutorizada';
 import { useDashboardData } from '@/hooks/useDashboardData';
+import { usePortalAuthContext } from '@/context/PortalAuthContext';
 import { KpiCards } from '@/components/dashboard/KpiCards';
 import { SyncBar } from '@/components/dashboard/SyncBar';
 import { DashboardRolesTable } from '@/components/dashboard/DashboardRolesTable';
@@ -16,8 +17,12 @@ import { RbacLanding } from '@/components/landing/RbacLanding';
 
 export default function DashboardPage() {
   const { isConnected, account, isOwner } = useWallet();
+  const { portalReady } = usePortalAuthContext();
   const { isAuthorized, loading: authLoading } = useIsCuentaAutorizada(account);
-  const { loading, error, errorLevel, roles, actividad, stats, refresh } = useDashboardData(account);
+  const dashboardEnabled = isConnected && !!account && portalReady;
+  const { loading, error, errorLevel, roles, actividad, stats, refresh } = useDashboardData(
+    dashboardEnabled ? account : null,
+  );
 
   if (!isConnected) return <RbacLanding />;
 

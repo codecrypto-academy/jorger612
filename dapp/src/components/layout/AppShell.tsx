@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useWallet } from '@/context/WalletContext';
+import { PortalAuthProvider } from '@/context/PortalAuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Navbar } from '@/components/layout/Navbar';
 
@@ -11,9 +12,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { isConnected } = useWallet();
   const isDesignDemo = pathname?.startsWith('/demo/diseno') ?? false;
-  const isMarket = pathname === '/market';
+  const isMarket = pathname === '/market' || pathname?.startsWith('/market/');
   const isHomeLanding = pathname === '/' && !isConnected;
   const isLanding = isHomeLanding || isMarket;
+  const portalAuthEnabled = isConnected && !isMarket && !isDesignDemo;
 
   if (isDesignDemo) {
     return <>{children}</>;
@@ -31,6 +33,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isDashboard = pathname === '/';
 
   return (
+    <PortalAuthProvider enabled={portalAuthEnabled}>
     <div className="ds-app-shell">
       <div className="ds-app-shell__row">
         <Sidebar
@@ -46,5 +49,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </div>
     </div>
+    </PortalAuthProvider>
   );
 }

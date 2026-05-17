@@ -24,7 +24,13 @@ export async function connectMongo(retries = 12, delayMs = 2500) {
       client = new MongoClient(uri);
       await client.connect();
       db = client.db();
-      await db.collection('market_leads').createIndex({ createdAt: -1 });
+      const leads = db.collection('market_leads');
+      await leads.createIndex({ createdAt: -1 });
+      await leads.createIndex(
+        { passwordSetupTokenHash: 1 },
+        { unique: true, sparse: true },
+      );
+      await leads.createIndex({ walletAddress: 1 });
       return db;
     } catch (err) {
       lastErr = err;

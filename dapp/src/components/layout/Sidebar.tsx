@@ -35,7 +35,7 @@ const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
     title: 'Configuración',
     items: [
       { href: '/cuentas', label: 'Cuentas autorizadas', Icon: UserGroupIcon, ownerOnly: true },
-      { href: '/peticiones', label: 'Peticiones market', Icon: ClipboardDocumentListIcon, ownerOnly: true },
+      { href: '/peticiones', label: 'Peticiones RBAC Blockchain', Icon: ClipboardDocumentListIcon, ownerOnly: true },
     ],
   },
 ];

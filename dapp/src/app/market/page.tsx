@@ -128,7 +128,7 @@ export default function MarketPage() {
           >
             <ShieldCheckIcon style={{ width: 30, height: 30 }} />
           </div>
-          <h1 style={{ margin: '0 0 8px', fontSize: '1.5rem', fontWeight: 700, color: 'var(--ds-text-title)' }}>Market</h1>
+          <h1 style={{ margin: '0 0 8px', fontSize: '1.5rem', fontWeight: 700, color: 'var(--ds-text-title)' }}>RBAC Blockchain</h1>
           <p style={{ margin: 0, fontSize: 14, color: 'var(--ds-text-secondary)', lineHeight: 1.55 }}>
             Complete el formulario para solicitar acceso al registro de su RBAC.
           </p>
@@ -147,7 +147,7 @@ export default function MarketPage() {
           >
             <p style={{ margin: 0, fontWeight: 600 }}>Envío recibido</p>
             <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.55 }}>
-              Una vez haga el envío de este formulario en un plazo de tres días recibirá un correo electrónico para que pueda iniciar con el uso del registro de su RBAC.
+              Revise su correo electrónico: le enviamos un enlace para establecer la clave de acceso asociada a su wallet.
             </p>
           </div>
         ) : (
@@ -162,7 +162,7 @@ export default function MarketPage() {
               background: 'var(--ds-bg-soft)',
             }}
           >
-            Una vez haga el envío de este formulario en un plazo de tres días recibirá un correo electrónico para que pueda iniciar con el uso del registro de su RBAC.
+            Tras enviar el formulario recibirá un correo con un enlace para establecer su clave de acceso (válido durante 72 horas).
           </p>
         )}
 

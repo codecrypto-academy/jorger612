@@ -50,6 +50,10 @@ services:
       PORT: "3007"
       MONGODB_URI: mongodb://mongo:27017/rbac_market
       REDIS_URL: redis://redis:6379
+      DAPP_PUBLIC_URL: ${DAPP_PUBLIC_URL:-http://localhost:3006}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-}
+      PASSWORD_SETUP_EXPIRES_HOURS: ${PASSWORD_SETUP_EXPIRES_HOURS:-72}
     depends_on:
       mongo:
         condition: service_healthy

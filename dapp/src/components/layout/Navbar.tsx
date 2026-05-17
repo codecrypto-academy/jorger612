@@ -29,7 +29,7 @@ export function Navbar({ onMenuClick, variant = 'dark', hideWalletButton = false
   const pathname = usePathname();
   const { isConnected } = useWallet();
   const landing = variant === 'light' && pathname !== '/';
-  const isMarket = pathname === '/market';
+  const isMarket = pathname === '/market' || (pathname?.startsWith('/market/') ?? false);
   const meta = TITLES[pathname] ?? { title: 'SecurityManager', subtitle: 'Sistema RBAC en blockchain' };
   const isDashboard = pathname === '/';
 
@@ -53,7 +53,7 @@ export function Navbar({ onMenuClick, variant = 'dark', hideWalletButton = false
               <ShieldCheckIcon style={{ width: 22, height: 22 }} />
             </div>
             <div className="ds-navbar__titles">
-              <h1>{isMarket ? 'Market' : 'RBAC Blockchain'}</h1>
+              <h1>RBAC Blockchain</h1>
               <p>{isMarket ? 'Solicitud de acceso' : 'Sistema RBAC en blockchain'}</p>
             </div>
           </div>

@@ -24,3 +24,6 @@ docs/
 
 # Windows WSL metadata
 *:Zone.Identifier
+
+# Prueba técnica Hyperledger Fabric — NO subir al repositorio
+hiperledgerfabric/

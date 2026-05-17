@@ -140,7 +140,7 @@ export default function PeticionesPage() {
     return (
       <div style={{ animation: 'dsFadeIn 0.35s ease' }}>
         <div className="ds-alert ds-alert--danger" role="alert">
-          Solo el owner del contrato puede ver y gestionar las peticiones del formulario Market.
+          Solo el owner del contrato puede ver y gestionar las peticiones del formulario RBAC Blockchain.
         </div>
       </div>
     );
@@ -150,7 +150,7 @@ export default function PeticionesPage() {
     <div style={{ animation: 'dsFadeIn 0.35s ease' }}>
       <div className="ds-card" style={{ marginBottom: 20 }}>
         <h2 className="ds-card__title" style={{ color: 'var(--ds-text-title)' }}>
-          Peticiones Market
+          Peticiones RBAC Blockchain
         </h2>
         <p style={{ margin: '0 0 16px', fontSize: 14, color: 'var(--ds-text-secondary)', lineHeight: 1.6 }}>
           Gestione las solicitudes enviadas desde el formulario: marque como enviado o anule según corresponda.

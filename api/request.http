@@ -143,3 +143,40 @@ Content-Type: application/json
   "ownerAddress": "{{ownerWallet}}",
   "status": "Anulado"
 }
+
+###############################################################################
+### Establecer clave (correo Resend tras POST /market/leads)
+### Token: valor del query ?token= del enlace en el correo
+###############################################################################
+
+@setupToken = pegar_token_del_correo
+
+### Validar enlace (formulario dapp)
+GET {{baseUrl}}/market/password-setup?token={{setupToken}}
+
+### Guardar clave (bcrypt en MongoDB, campo passwordHash)
+POST {{baseUrl}}/market/password-setup
+Content-Type: application/json
+
+{
+  "token": "{{setupToken}}",
+  "password": "MiClaveSegura1",
+  "passwordConfirm": "MiClaveSegura1"
+}
+
+###############################################################################
+### Portal auth — login con wallet + clave (tras establecer clave en MongoDB)
+###############################################################################
+
+### Estado: ¿requiere login en portal?
+GET {{baseUrl}}/market/portal-auth/status?wallet={{wallet}}
+
+### Validar wallet + clave
+@portalPassword = MiClaveSegura1
+POST {{baseUrl}}/market/portal-auth/login
+Content-Type: application/json
+
+{
+  "walletAddress": "{{wallet}}",
+  "password": "{{portalPassword}}"
+}

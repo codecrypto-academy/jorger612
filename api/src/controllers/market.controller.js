@@ -2,6 +2,7 @@ import { ObjectId } from 'mongodb';
 import { ethers } from 'ethers';
 import { getMarketLeadsCollection } from '../db/mongo.js';
 import { assertContractOwner } from '../utils/ownerAuth.js';
+import { issuePasswordSetupForLead } from '../services/market-lead-password.service.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -64,10 +65,23 @@ export async function createMarketLead(request, reply) {
 
   const col = getMarketLeadsCollection();
   const result = await col.insertOne(doc);
+  const leadId = result.insertedId;
+
+  const emailResult = await issuePasswordSetupForLead(
+    leadId,
+    {
+      walletAddress: doc.walletAddress,
+      email: doc.email,
+      nombreApellido: doc.nombreApellido,
+    },
+    request.log,
+  );
 
   return reply.code(201).send({
     ok: true,
-    id: result.insertedId.toString(),
+    id: leadId.toString(),
+    emailSent: emailResult.sent,
+    ...(emailResult.sent ? {} : { emailWarning: emailResult.error ?? 'Correo no enviado' }),
   });
 }
 
