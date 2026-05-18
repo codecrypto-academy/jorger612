@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import { getMarketLeadsCollection } from '../db/mongo.js';
 import { verifyPassword } from '../services/password-crypto.service.js';
 import { sendPortalLoginFailedEmail } from '../services/email.service.js';
+import { issuePasswordSetupForLead } from '../services/market-lead-password.service.js';
 import {
   MAX_PORTAL_LOGIN_ATTEMPTS,
   PORTAL_LOCKOUT_MS,
@@ -208,5 +209,57 @@ export async function postPortalAuthLogin(request, reply) {
     walletAddress,
     nombreApellido: doc.nombreApellido ?? '',
     email: doc.email ?? '',
+  });
+}
+
+/**
+ * POST /market/portal-auth/forgot-password
+ * Body: { walletAddress }
+ * Reenvía correo con enlace a /market/establecer-clave (restablecer clave).
+ */
+export async function postPortalForgotPassword(request, reply) {
+  const body = request.body ?? {};
+  const wallet = typeof body.walletAddress === 'string' ? body.walletAddress.trim() : '';
+
+  const result = await findLeadByWallet(wallet);
+  if (result.error === 'invalid_address') {
+    return badRequest(reply, 'La dirección de wallet no es válida.');
+  }
+
+  const { walletAddress, doc } = result;
+  if (!doc) {
+    return reply.code(404).send({
+      error: 'not_found',
+      message: 'No hay registro para esta wallet. Complete el formulario Mi Primera Vez.',
+    });
+  }
+
+  const email = typeof doc.email === 'string' ? doc.email.trim() : '';
+  if (!email) {
+    return badRequest(reply, 'No hay correo registrado para esta wallet.');
+  }
+
+  const isReset = Boolean(doc.passwordHash);
+  const emailResult = await issuePasswordSetupForLead(
+    doc._id,
+    {
+      walletAddress: doc.walletAddress ?? walletAddress,
+      email,
+      nombreApellido: doc.nombreApellido,
+    },
+    request.log,
+    { isReset },
+  );
+
+  if (!emailResult.sent) {
+    return reply.code(503).send({
+      error: 'email_failed',
+      message: 'No se pudo enviar el correo. Inténtelo más tarde o contacte al administrador.',
+    });
+  }
+
+  return reply.send({
+    ok: true,
+    message: 'Se ha enviado un correo para restablecer su contraseña.',
   });
 }

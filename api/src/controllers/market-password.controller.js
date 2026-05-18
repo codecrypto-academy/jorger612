@@ -1,6 +1,7 @@
 import { getMarketLeadsCollection } from '../db/mongo.js';
-import { hashSetupToken, hashPassword, passwordSetupExpiryDate } from '../services/password-crypto.service.js';
+import { hashSetupToken, hashPassword } from '../services/password-crypto.service.js';
 import { validatePasswordPair } from '../utils/passwordPolicy.js';
+import { clearPortalLockFields } from '../services/portal-login-lockout.service.js';
 
 function badRequest(reply, message) {
   return reply.code(400).send({ error: 'bad_request', message });
@@ -37,16 +38,10 @@ export async function getPasswordSetupInfo(request, reply) {
     });
   }
 
-  if (doc.passwordHash) {
-    return reply.code(409).send({
-      error: 'already_set',
-      message: 'Ya existe una clave para esta solicitud. Use el flujo de recuperación cuando esté disponible.',
-    });
-  }
-
   return reply.send({
     walletAddress: doc.walletAddress,
     email: doc.email,
+    isReset: Boolean(doc.passwordHash),
   });
 }
 
@@ -77,13 +72,6 @@ export async function completePasswordSetup(request, reply) {
     });
   }
 
-  if (doc.passwordHash) {
-    return reply.code(409).send({
-      error: 'already_set',
-      message: 'La clave ya fue establecida para esta wallet.',
-    });
-  }
-
   const passwordHash = await hashPassword(password);
   const col = getMarketLeadsCollection();
   const result = await col.updateOne(
@@ -108,9 +96,13 @@ export async function completePasswordSetup(request, reply) {
     });
   }
 
+  await clearPortalLockFields(col, doc._id);
+
+  const wasReset = Boolean(doc.passwordHash);
   return reply.send({
     ok: true,
     walletAddress: doc.walletAddress,
-    message: 'Clave establecida correctamente.',
+    message: wasReset ? 'Clave restablecida correctamente.' : 'Clave establecida correctamente.',
+    isReset: wasReset,
   });
 }

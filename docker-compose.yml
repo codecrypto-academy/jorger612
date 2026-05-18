@@ -1,5 +1,5 @@
 # RBAC — stack para VPS (Besu puede correr aparte en el mismo host).
-# Puertos publicados: 3006 (dapp), 3007 (API), 27019 (MongoDB).
+# Puertos publicados: 3009→3006 (dapp en host; Nginx auditchain), 3007 (API), 27019 (MongoDB).
 #
 # Antes del primer arranque:
 #   1) Copie .env.example → .env en la RAÍZ (variables para el build de Next).
@@ -77,7 +77,7 @@ services:
         NETWORK_NAME: ${NETWORK_NAME:-Besu RBAC}
         CONTRACT_DISPLAY_NAME: ${CONTRACT_DISPLAY_NAME:-SecurityManager}
     ports:
-      - "3006:3006"
+      - "3009:3006"
     depends_on:
       - api
     networks:

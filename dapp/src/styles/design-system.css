@@ -2329,6 +2329,37 @@ body {
   text-decoration: underline;
 }
 
+.ds-portal-modal__link-btn {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ds-accent-start);
+  cursor: pointer;
+  text-decoration: underline;
+  font-family: inherit;
+}
+
+.ds-portal-modal__link-btn:hover:not(:disabled) {
+  color: var(--ds-accent-end);
+}
+
+.ds-portal-modal__link-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ds-alert--success {
+  background: var(--ds-success-bg, #ecfdf5);
+  color: var(--ds-success-text, #047857);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--ds-radius-input, 10px);
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .ds-portal-welcome__badge {
   width: 64px;
   height: 64px;

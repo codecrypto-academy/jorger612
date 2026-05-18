@@ -180,3 +180,11 @@ Content-Type: application/json
   "walletAddress": "{{wallet}}",
   "password": "{{portalPassword}}"
 }
+
+### Olvidé mi contraseña — reenvía correo con enlace a establecer-clave
+POST {{baseUrl}}/market/portal-auth/forgot-password
+Content-Type: application/json
+
+{
+  "walletAddress": "{{wallet}}"
+}

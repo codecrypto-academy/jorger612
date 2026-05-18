@@ -13,6 +13,7 @@ function EstablecerClaveForm() {
   const token = searchParams.get('token')?.trim() ?? '';
 
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [isReset, setIsReset] = useState(false);
   const [loadingInfo, setLoadingInfo] = useState(true);
   const [infoError, setInfoError] = useState<string | null>(null);
   const [password, setPassword] = useState('');
@@ -43,6 +44,7 @@ function EstablecerClaveForm() {
           return;
         }
         setWalletAddress(typeof data.walletAddress === 'string' ? data.walletAddress : null);
+        setIsReset(Boolean(data.isReset));
       } catch {
         if (!cancelled) setInfoError('No se pudo validar el enlace. Inténtelo más tarde.');
       } finally {
@@ -110,10 +112,12 @@ function EstablecerClaveForm() {
             <KeyIcon style={{ width: 28, height: 28 }} />
           </div>
           <h1 style={{ margin: '0 0 8px', fontSize: '1.5rem', fontWeight: 700, color: 'var(--ds-text-title)' }}>
-            Establecer clave de acceso
+            {isReset ? 'Restablecer clave de acceso' : 'Establecer clave de acceso'}
           </h1>
           <p style={{ margin: 0, fontSize: 14, color: 'var(--ds-text-secondary)', lineHeight: 1.55 }}>
-            Defina la clave asociada a su wallet para acceder al RBAC.
+            {isReset
+              ? 'Defina una nueva clave asociada a su wallet para acceder al RBAC.'
+              : 'Defina la clave asociada a su wallet para acceder al RBAC.'}
           </p>
         </div>
 
@@ -140,9 +144,13 @@ function EstablecerClaveForm() {
               color: 'var(--ds-success-text)',
             }}
           >
-            <p style={{ margin: 0, fontWeight: 600 }}>Clave guardada</p>
+            <p style={{ margin: 0, fontWeight: 600 }}>
+              {isReset ? 'Clave restablecida' : 'Clave guardada'}
+            </p>
             <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.55 }}>
-              Su clave quedó registrada para la wallet indicada. En una próxima fase podrá usarla para iniciar sesión.
+              {isReset
+                ? 'Su nueva clave quedó registrada. Ya puede volver al portal e iniciar sesión con ella.'
+                : 'Su clave quedó registrada para la wallet indicada. Ya puede usarla para iniciar sesión en el portal.'}
             </p>
           </div>
         )}

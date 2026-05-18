@@ -8,7 +8,7 @@ import { sendPasswordSetupEmail } from './email.service.js';
  * @param {{ walletAddress: string, email: string, nombreApellido?: string }} lead
  * @param {{ warn?: (obj: object, msg: string) => void }} [log]
  */
-export async function issuePasswordSetupForLead(leadId, lead, log) {
+export async function issuePasswordSetupForLead(leadId, lead, log, { isReset = false } = {}) {
   const { token, hash } = generateSetupToken();
   const passwordSetupExpiresAt = passwordSetupExpiryDate();
 
@@ -29,6 +29,7 @@ export async function issuePasswordSetupForLead(leadId, lead, log) {
     walletAddress: lead.walletAddress,
     setupToken: token,
     nombreApellido: lead.nombreApellido,
+    isReset,
   });
 
   if (!emailResult.sent && log?.warn) {

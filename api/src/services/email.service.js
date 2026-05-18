@@ -21,7 +21,13 @@ function getDappBaseUrl() {
  * Envía correo con enlace para establecer clave de acceso.
  * @returns {Promise<{ sent: boolean, error?: string }>}
  */
-export async function sendPasswordSetupEmail({ to, walletAddress, setupToken, nombreApellido }) {
+export async function sendPasswordSetupEmail({
+  to,
+  walletAddress,
+  setupToken,
+  nombreApellido,
+  isReset = false,
+}) {
   const resend = getResendClient();
   if (!resend) {
     return { sent: false, error: 'RESEND_API_KEY no configurada' };
@@ -30,22 +36,32 @@ export async function sendPasswordSetupEmail({ to, walletAddress, setupToken, no
   const setupUrl = `${getDappBaseUrl()}/market/establecer-clave?token=${encodeURIComponent(setupToken)}`;
   const greeting = nombreApellido ? `Hola ${nombreApellido},` : 'Hola,';
   const expiryHours = process.env.PASSWORD_SETUP_EXPIRES_HOURS || '72';
+  const intro = isReset
+    ? 'Recibimos una solicitud para <strong>restablecer la clave</strong> de acceso al Centro de Control RBAC.'
+    : 'Recibimos tu solicitud de acceso al <strong>Centro de Control RBAC</strong>.';
+  const action = isReset
+    ? 'Para definir una nueva clave vinculada a tu wallet, abre el siguiente enlace:'
+    : 'Para asignar la clave de acceso vinculada a tu wallet, abre el siguiente enlace:';
+  const buttonLabel = isReset ? 'Restablecer mi clave' : 'Establecer mi clave';
+  const subject = isReset
+    ? 'Restablece tu clave de acceso — RBAC'
+    : 'Establece tu clave de acceso — RBAC';
 
   const html = `
     <div style="font-family: system-ui, sans-serif; max-width: 560px; line-height: 1.6; color: #1e293b;">
       <p>${greeting}</p>
-      <p>Recibimos tu solicitud de acceso al <strong>Centro de Control RBAC</strong>.</p>
-      <p>Para asignar la clave de acceso vinculada a tu wallet, abre el siguiente enlace:</p>
+      <p>${intro}</p>
+      <p>${action}</p>
       <p style="margin: 24px 0;">
         <a href="${setupUrl}" style="display: inline-block; padding: 12px 20px; background: #6366f1; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600;">
-          Establecer mi clave
+          ${buttonLabel}
         </a>
       </p>
       <p style="font-size: 13px; color: #64748b;">Wallet: <code>${walletAddress}</code></p>
       <p style="font-size: 13px; color: #64748b;">Si el botón no funciona, copia y pega esta URL en el navegador:<br/>
         <a href="${setupUrl}">${setupUrl}</a>
       </p>
-      <p style="font-size: 12px; color: #94a3b8;">Este enlace caduca en ${expiryHours} horas. Si no solicitaste este registro, ignora este mensaje.</p>
+      <p style="font-size: 12px; color: #94a3b8;">Este enlace caduca en ${expiryHours} horas. Si no solicitaste esto, ignora este mensaje.</p>
     </div>
   `;
 
@@ -53,7 +69,7 @@ export async function sendPasswordSetupEmail({ to, walletAddress, setupToken, no
     const { error } = await resend.emails.send({
       from: getFromAddress(),
       to: [to],
-      subject: 'Establece tu clave de acceso — RBAC',
+      subject,
       html,
     });
     if (error) {
